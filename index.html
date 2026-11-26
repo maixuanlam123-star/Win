@@ -1,0 +1,792 @@
+<!DOCTYPE html>
+<html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#3d2614">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="favicon.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Xúc xắc">
+<title>Sổ dữ liệu xúc xắc</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+/* VOICE: a quiet, exact logbook for collecting data.
+   IDEA: a ledger page; each round is a line of three coloured dice.
+   PICTURE: the import tool itself, then the ledger.
+   COLOUR and TYPE: dark walnut band with gold, white page; dice in the game's purple/red/green. Be Vietnam Pro.
+   LAYOUT: one column, max 900px; tool, stats, table. */
+:root{color-scheme:light dark;--bg:light-dark(#ffffff,#15110d);--ink:light-dark(#1d1712,#efe8df);--mute:light-dark(#6d6259,#a89c90);--line:light-dark(#e7e0d8,#2e2620);--card:light-dark(#faf7f3,#1d1813);--wal:#3d2614;--gold:#f2c14e;--p:#b13bd4;--r:#d63b3b;--g:#1d9e5f;--bad:light-dark(#b3261e,#ff8a80);--warn:light-dark(#8a5a00,#ffcc66)}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 "Be Vietnam Pro",system-ui,sans-serif;overflow-x:clip}
+.band{padding:clamp(20px,4vw,40px) max(5vw,16px)}.wrap{max-width:900px;margin:0 auto}
+header.band{background:var(--wal);color:#f6ead8;padding-top:max(clamp(20px,4vw,40px),env(safe-area-inset-top));padding-left:max(5vw,16px,env(safe-area-inset-left));padding-right:max(5vw,16px,env(safe-area-inset-right))}
+h1{font-size:clamp(28px,6vw,40px);line-height:1.05;margin:0 0 6px;color:var(--gold);font-weight:800;text-wrap:balance}
+h2{font-size:20px;margin:0 0 10px}
+.sub{margin:0;color:#e3d3bd}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;margin-bottom:16px}
+.btn,button,select,input{font:inherit;font-size:16px}
+.btn,button{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:0 16px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--ink);cursor:pointer;font-weight:600}
+.primary{background:var(--wal);color:var(--gold);border-color:var(--wal)}
+button:focus-visible,.btn:focus-within,select:focus-visible,input:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+button:disabled{opacity:.5;cursor:default}
+select,input{min-height:44px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--ink);padding:0 10px}
+.hint{color:var(--mute);font-size:14px;margin:10px 0 0}
+.status{margin-top:10px;font-weight:600}.status.err{color:var(--bad)}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.row.sp{justify-content:space-between}
+.die{display:inline-grid;place-items:center;width:30px;height:30px;border-radius:50%;color:#fff;font-weight:800;margin-right:4px;font-size:15px}
+.die.p{background:var(--p)}.die.r{background:var(--r)}.die.g{background:var(--g)}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:14px;color:var(--mute);margin:6px 0 0}
+.legend span::before{content:"";display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;background:var(--c)}
+table{width:100%;border-collapse:collapse}
+th,td{padding:8px 6px;border-bottom:1px solid var(--line);text-align:left;vertical-align:middle}
+th{font-size:13px;color:var(--mute);font-weight:600}
+.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.tag{font-size:13px;font-weight:700;padding:2px 8px;border-radius:99px;white-space:nowrap}
+.tai{background:#16110d;color:#f2c14e}.xiu{background:#fff;color:#1d1712;box-shadow:inset 0 0 0 1px #cfc6bc}
+.new{color:var(--g);font-weight:700}.same{color:var(--mute)}.diff{color:var(--warn);font-weight:700}.mis{color:var(--bad);font-weight:700}
+.x{min-height:36px;padding:0 10px;font-size:14px}
+.ds{color:#fff;font-weight:800;border:0;text-align:center}.ds.p{background:var(--p)}.ds.r{background:var(--r)}.ds.g{background:var(--g)}.ds option{background:var(--bg);color:var(--ink)}
+
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));gap:14px}
+.bar{display:grid;grid-template-columns:18px minmax(0,1fr) 72px;gap:8px;align-items:center;font-size:14px;margin:4px 0}
+.track{height:12px;background:var(--line);border-radius:6px;overflow:hidden;position:relative}
+.fill{height:100%;border-radius:6px}
+.track::after{content:"";position:absolute;top:-2px;bottom:-2px;left:16.67%;width:2px;background:var(--ink);opacity:.35}
+.chi{font-size:13px;color:var(--mute);margin-top:6px}
+.empty{color:var(--mute);text-align:center;padding:24px}
+.scroll{overflow-x:auto}
+.sync{margin-top:10px;font-size:14px;color:#e3d3bd;display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.sync:empty{display:none}
+.dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;background:#8a7a68;vertical-align:middle}
+.dot.on{background:#3ecf7a}.dot.busy{background:var(--gold)}.dot.err{background:#ff6b5e}
+.pwf{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.pwf input{width:180px;min-height:40px;background:#fff;color:#1d1712;border:0}
+.pwf .primary{background:var(--gold);color:#2a1a0c;border-color:var(--gold);min-height:40px}
+.sbtn{min-height:32px;padding:0 10px;font-size:13px;background:transparent;color:#f6ead8;border-color:rgba(255,255,255,.35)}
+.inst{background:var(--gold);color:#2a1a0c;border-color:var(--gold);min-height:36px;font-size:14px}
+.serr{color:#ffb4a8;font-weight:600}
+#preview:not(:empty){position:fixed;inset:0;z-index:50;background:rgba(20,13,6,.6);display:grid;place-items:center;padding:12px}
+.pvbox{background:var(--card);color:var(--ink);width:min(1040px,100%);max-height:calc(100vh - 24px);overflow:auto;border-radius:16px;padding:16px 18px 0;box-shadow:0 20px 60px rgba(0,0,0,.4)}
+.pvtop{display:flex;justify-content:space-between;align-items:center;gap:10px}.pvtop h2{margin:0}
+.pvfoot{position:sticky;bottom:0;background:var(--card);display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:12px 0 16px;border-top:1px solid var(--line);margin-top:8px}
+.pvfoot .big{min-height:52px;font-size:18px;padding:0 28px}
+.keys{font-size:13px;color:var(--mute)}
+.seg{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:4px 12px;align-items:baseline;padding:6px 2px 0;border-top:2px solid var(--wal)}
+.seg b{font-size:15px}.seg span{font-size:13px;color:var(--mute)}
+.gapm{grid-column:1/-1;text-align:center;font-size:13px;font-weight:600;color:var(--warn);background:repeating-linear-gradient(45deg,transparent 0 8px,light-dark(#f3ead8,#2a2218) 8px 16px);border-radius:8px;padding:8px}
+.how{margin:4px 0 12px;padding-left:20px;color:var(--mute);font-size:14px}.how b{color:var(--ink)}
+.patex{background:var(--bg);border:1px solid var(--line);border-left:4px solid var(--gold);border-radius:10px;padding:10px 12px;margin-bottom:12px;font-size:15px}
+.patex:empty{display:none}
+.patl{display:grid;gap:8px}
+.pr{display:grid;grid-template-columns:96px minmax(0,1.1fr) minmax(0,1fr) minmax(0,1.2fr);gap:12px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)}
+.pr .k{font-size:13px;color:var(--mute);white-space:nowrap}
+.pr .lab{font-size:12px;color:var(--mute);display:none}
+.split{display:flex;height:22px;border-radius:6px;overflow:hidden;font-size:12px;font-weight:700}
+.split span{display:flex;align-items:center;justify-content:center;white-space:nowrap;min-width:0;overflow:hidden}
+.split .st{background:#16110d;color:#f2c14e}.split .sx{background:#fff;color:#1d1712;box-shadow:inset 0 0 0 1px #cfc6bc}
+.sub2{font-size:12px;color:var(--mute);margin-top:3px;white-space:nowrap}
+.acc{position:relative;height:10px;background:var(--line);border-radius:5px;overflow:hidden}
+.acc i{position:absolute;left:0;top:0;bottom:0;background:var(--mute);border-radius:5px}
+.acc::after{content:"";position:absolute;left:50%;top:-2px;bottom:-2px;width:2px;background:var(--ink)}
+.chip{display:inline-block;font-size:12px;font-weight:700;border-radius:99px;padding:2px 9px;margin-top:4px}
+.chip.n{background:var(--line);color:var(--ink)}.chip.w{background:transparent;color:var(--mute);box-shadow:inset 0 0 0 1px var(--line)}.chip.a{background:light-dark(#fff1cc,#4a3a10);color:var(--warn)}
+.pr.ph{padding:0 0 6px;font-size:13px;color:var(--mute);font-weight:600}
+@media(max-width:640px){.pr.ph{display:none}}
+.pr .pt{white-space:normal;display:flex;flex-wrap:wrap;gap:2px}.pr .pt b{margin-right:0}
+.prnone{color:var(--mute);font-size:14px;padding:10px 0}
+@media(max-width:640px){.pr{grid-template-columns:minmax(0,1fr) minmax(0,1fr);row-gap:6px}.pr .k{grid-column:1/-1}.pr .pt{grid-column:1/-1}.pr .lab{display:block}}
+#tline g[data-p]{cursor:pointer}
+.ptinfo{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-top:8px;min-height:0}
+.ptinfo:empty{display:none}
+.ptinfo .lbl{font-weight:700;font-variant-numeric:tabular-nums}
+.hc.flash{animation:fl 1.2s ease-out}
+@keyframes fl{0%{transform:scale(1.08);box-shadow:0 0 0 6px var(--gold)}100%{transform:none;box-shadow:none}}
+@media(prefers-reduced-motion:reduce){.hc.flash{animation:none}}
+.fold summary{list-style:none;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:44px}
+.fold summary::-webkit-details-marker{display:none}
+.fold summary h2{margin:0}
+.fold summary::after{content:"Hiện";font-size:14px;font-weight:600;color:var(--mute);border:1px solid var(--line);border-radius:99px;padding:4px 12px;white-space:nowrap}
+.fold details[open]>summary::after{content:"Ẩn"}
+.fold details[open]>summary{margin-bottom:10px}
+.fold summary:focus-visible{outline:3px solid var(--gold);outline-offset:4px;border-radius:6px}
+.pt{white-space:nowrap;line-height:1}.pt b{display:inline-block;width:20px;height:20px;line-height:20px;text-align:center;border-radius:5px;margin-right:2px;font-weight:800;font-size:12px;vertical-align:middle}.pt b.pt-t{background:#16110d;color:#f2c14e}.pt b.pt-x{background:#fff;color:#1d1712;box-shadow:inset 0 0 0 1px #b9afa4}
+.bar1{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.or{color:var(--mute);font-size:14px;white-space:nowrap}
+.sep{flex:1 1 0;min-width:8px}
+#imp .status:empty{display:none}
+.fig{position:relative}.fig>svg{position:absolute;inset:0;width:100%;height:100%}
+.tl{height:170px;margin-top:10px;background:#4a2e17;border-radius:12px}
+.hg{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:8px;margin-top:12px}
+.hc{border:1px solid var(--line);border-radius:10px;padding:6px 4px;text-align:center;background:var(--bg);cursor:pointer;font:inherit;color:inherit;min-height:0;display:block;width:100%}
+.hc.sel{outline:3px solid var(--gold);outline-offset:1px}
+.hc .pn{font-size:12px;color:var(--mute);font-variant-numeric:tabular-nums;white-space:nowrap}
+.hc .die{width:22px;height:22px;font-size:13px;margin:2px 1px}
+.hc .tt{font-size:13px;font-weight:700;margin-top:2px;white-space:nowrap}
+.hc.tai{background:#16110d;border-color:#16110d;color:#fff}.hc.xiu{background:#fff;border-color:#cfc6bc;color:#1d1712}
+.hc.tai .pn{color:#bfb3a6}.hc.xiu .pn{color:#6d6259}
+.hc.tai .tt{color:#f2c14e}.hc.xiu .tt{color:#1d1712}
+.hc.tai .die{box-shadow:0 0 0 1.5px #16110d,0 0 0 2.5px rgba(255,255,255,.35)}
+.pg{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px;margin-top:12px}
+.pc{border:1px solid var(--line);border-radius:10px;padding:6px;text-align:center;background:var(--bg)}
+.pc .ds{display:block;width:100%;min-height:34px;margin:3px 0;padding:0 4px}
+.pc .pn{font-size:12px;color:var(--mute);white-space:nowrap}.pc .st{font-size:12px;white-space:nowrap}
+.ds.uns{outline:3px dashed var(--gold);outline-offset:2px}
+.pvhead{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:14px;padding:12px;border-radius:10px;background:var(--bg);border:1px solid var(--line)}
+.pvhead input{width:190px}.pvhead input.need{border:2px solid var(--gold);box-shadow:0 0 0 4px rgba(242,193,78,.25)}
+.paste{margin:12px 0 0;font-weight:600}
+kbd{font:inherit;font-size:14px;border:1px solid var(--line);border-bottom-width:3px;border-radius:6px;padding:1px 7px;background:var(--bg)}
+#imp{transition:outline-color .15s;outline:3px dashed transparent;outline-offset:-3px}
+#imp.drop{outline-color:var(--gold)}
+@media(max-width:600px){table{font-size:14px}.die{width:26px;height:26px;font-size:14px}}
+</style></head><body>
+<header class="band"><div class="wrap">
+<h1>Sổ dữ liệu xúc xắc</h1>
+<p class="sub" id="sum">Đang tải dữ liệu…</p>
+<div id="sync" class="sync"></div>
+<div id="inst" class="sync" hidden></div>
+</div></header>
+
+<main class="band"><div class="wrap">
+<section class="card" id="imp">
+<div class="bar1">
+<label class="btn primary" id="pick">Chọn ảnh<input type="file" id="img" accept="image/*" multiple hidden></label>
+<span class="or">hoặc <kbd>Ctrl</kbd>+<kbd>V</kbd> / kéo thả ảnh</span>
+<span class="sep" aria-hidden="true"></span>
+<form id="manual" class="row" style="gap:6px">
+<input id="mp" type="number" inputmode="numeric" placeholder="Số phiên" aria-label="Số phiên" style="width:120px" required>
+<select id="m1" class="ds p" aria-label="Xí ngầu 1 (tím)"></select><select id="m2" class="ds r" aria-label="Xí ngầu 2 (đỏ)"></select><select id="m3" class="ds g" aria-label="Xí ngầu 3 (xanh)"></select>
+<button class="primary" type="submit">Thêm tay</button>
+</form>
+</div>
+<div id="status" class="status" role="status"></div>
+<div id="preview"></div>
+</section>
+
+<section class="card fold"><details data-k="freq" open><summary><h2>Tần suất từng mặt</h2></summary>
+<div class="stats" id="stats"></div>
+<p class="hint">Vạch dọc là mức 16,7% nếu xúc xắc ngẫu nhiên đều. χ² lớn hơn 11,07 (5 bậc tự do) mới là dấu hiệu lệch, và chỉ đáng tin khi có từ vài nghìn phiên trở lên.</p>
+</details></section>
+
+<section class="card fold"><details data-k="pat" open><summary><h2>Tra cứu cầu đang chạy</h2></summary>
+<div class="pr ph"><div></div><div>Cầu</div><div>Trước đây sau cầu này</div><div>Nếu luôn đặt theo cầu</div></div>
+<div id="pat" class="patl"></div>
+</details></section>
+
+<section class="card fold"><details data-k="bt"><summary><h2>Chấm điểm các chiến thuật "soi cầu"</h2></summary>
+<p class="hint" style="margin-top:0">Mỗi chiến thuật được chạy lại trên chính dữ liệu đã lưu, chỉ dùng các phiên liền nhau trước đó, rồi so tỉ lệ đoán đúng với mức may rủi.</p>
+<div class="scroll"><table><thead><tr><th>Chiến thuật</th><th class="num">Số lần thử</th><th class="num">Đúng</th><th class="num">May rủi</th><th>Đánh giá</th></tr></thead><tbody id="bt"></tbody></table></div>
+<p class="chi" id="runs"></p>
+<p class="hint">"Lệch khỏi may rủi" cần |z| ≥ 2. Khi thử nhiều chiến thuật cùng lúc, thỉnh thoảng sẽ có một cái vượt ngưỡng chỉ vì may. Hãy xem nó có giữ được khi dữ liệu tăng gấp đôi không.</p>
+</details></section>
+
+<section class="card">
+<div class="row sp"><h2 style="margin:0">Lịch sử</h2>
+<div class="row"><button id="copy">Sao chép CSV</button><button id="dl">Tải CSV</button><label class="btn" id="impl">Nhập CSV<input type="file" id="csvin" accept=".csv,text/csv,text/plain" hidden></label></div></div>
+<p class="hint" id="mode"></p>
+<p class="hint" id="gap"></p>
+<div class="fig tl"><svg id="tline" role="img" aria-label="Biểu đồ tổng điểm các phiên gần nhất"></svg></div>
+<div id="ptinfo" class="ptinfo" aria-live="polite"></div>
+<p class="hint" style="margin-top:4px">Đường tổng điểm 30 phiên gần nhất. Chấm vàng là Tài, chấm xám là Xỉu. Bấm vào một điểm để xem 3 viên của phiên đó và tô sáng ô tương ứng ở lưới bên dưới.</p>
+<div class="row" style="margin-top:10px"><button id="more" hidden>Xem thêm</button></div>
+<div class="hg" id="hist"></div>
+<div class="row" id="selbar" style="margin-top:10px"></div>
+</section>
+</div></main>
+
+<script>
+{
+function parseCore(px,W,H,L){
+  const N=W*H,cls=new Uint8Array(N);
+  for(let i=0;i<N;i++){const r=px[i*4],g=px[i*4+1],b=px[i*4+2];
+    if(r>150&&b>150&&g<150&&r-g>70&&b-g>70)cls[i]=1;
+    else if(r>170&&g<150&&b<170&&r-g>70&&r-b>50)cls[i]=2;
+    else if(g>140&&g-r>40&&g-b>15)cls[i]=3;}
+  const hr=new Uint16Array(N),vr=new Uint16Array(N);
+  for(let y=0;y<H;y++){let x=0;while(x<W){const c=cls[y*W+x];if(!c){x++;continue}let k=x;while(k<W&&cls[y*W+k]===c)k++;for(let t=x;t<k;t++)hr[y*W+t]=k-x;x=k}}
+  for(let x=0;x<W;x++){let y=0;while(y<H){const c=cls[y*W+x];if(!c){y++;continue}let k=y;while(k<H&&cls[k*W+x]===c)k++;for(let t=y;t<k;t++)vr[t*W+x]=k-y;y=k}}
+  const seen=new Uint8Array(N),comps=[];
+  for(let i=0;i<N;i++){
+    if(seen[i]||!cls[i]||hr[i]<L||vr[i]<L)continue;
+    const c=cls[i],st=[i];seen[i]=1;let n=0,sx=0,sy=0;
+    while(st.length){const j=st.pop(),x=j%W,y=(j-x)/W;n++;sx+=x;sy+=y;
+      for(const q of [x>0?j-1:-1,x<W-1?j+1:-1,j-W,j+W]){if(q<0||q>=N||seen[q]||cls[q]!==c||hr[q]<L||vr[q]<L)continue;seen[q]=1;st.push(q)}}
+    if(n<15)continue;
+    const cx=Math.round(sx/n),cy=Math.round(sy/n);
+    const h=hr[cy*W+cx],v=vr[cy*W+cx],rr=v*0.85;let ring=0,rt=0;
+    for(let a=0;a<64;a++){const xx=Math.round(cx+rr*Math.cos(a*Math.PI/32)),yy=Math.round(cy+rr*Math.sin(a*Math.PI/32));if(xx<0||yy<0||xx>=W||yy>=H)continue;rt++;if(cls[yy*W+xx]===c)ring++}
+    comps.push({c,x:sx/n,y:sy/n,n,h,v,ring:rt?ring/rt:1});
+  }
+  if(!comps.length)throw new Error('Không tìm thấy chấm màu nào');
+  const med=a=>{const s=a.slice().sort((p,q)=>p-q);return s[s.length>>1]};
+  const n0=med(comps.filter(d=>d.n>=60).map(d=>d.n));const big=comps.filter(d=>d.n>=0.5*n0);
+  const D=med(big.map(d=>d.v)),mn=med(big.map(d=>d.n));
+  let dots=big.filter(d=>d.v<=D*1.4&&d.v>=D*0.7&&d.n>=mn*0.6&&d.n<=mn*1.6&&d.ring<0.3);
+  const yc=[];dots.slice().sort((a,b)=>a.y-b.y).forEach(d=>{const l=yc[yc.length-1];if(l&&d.y-l.y<D/2){l.k++;l.y=(l.y*(l.k-1)+d.y)/l.k}else yc.push({y:d.y,k:1})});
+  const lv=yc.filter(c=>c.k>=3);if(lv.length<2)throw new Error('Không xác định được trục 1-6');
+  dots=dots.filter(d=>d.y>=lv[0].y-D/2&&d.y<=lv[lv.length-1].y+D/2);
+  dots.sort((a,b)=>a.x-b.x);
+  const cols=[];
+  for(const d of dots){const last=cols[cols.length-1];if(last&&d.x-last.x<D*0.6){last.d.push(d);last.x=(last.x*(last.d.length-1)+d.x)/last.d.length}else cols.push({x:d.x,d:[d]})}
+  if(D<9)throw new Error('Ảnh quá nhỏ, hãy chụp lại ở kích thước gốc');
+  if(cols.length>=3){const gp=[];for(let i=1;i<cols.length;i++)gp.push(cols[i].x-cols[i-1].x);const sg=gp.slice().sort((a,b)=>a-b),mg=sg[sg.length>>1];
+    if(gp.some(g=>g>mg*1.5||g<mg*0.6))throw new Error('Có cột không đọc được (ảnh mờ hoặc bị che), hãy chụp lại rõ hơn');}
+  const ys=dots.map(d=>d.y),ymin=Math.min(...ys),ymax=Math.max(...ys),step=(ymax-ymin)/5;
+  if(step<D*0.5)throw new Error('Không xác định được trục 1-6');
+  const val=y=>Math.max(1,Math.min(6,6-Math.round((y-ymin)/step)));
+  const yOf=v=>ymin+(6-v)*step;
+  const res=cols.map(col=>{const r=[0,0,0],cand=[];for(const d of col.d){if(!r[d.c-1])r[d.c-1]=val(d.y)}return {x:col.x,r,vis:[...new Set(r.filter(Boolean))],unsure:[]}});
+  // totals from the top chart: find each column's circle above the dice chart
+  const top=Math.round(ymin-D*1.2),y0=Math.max(0,Math.round(top-1.3*(ymax-ymin)));
+  const isC=(q)=>{const r=px[q*4],g=px[q*4+1],b=px[q*4+2],mx=Math.max(r,g,b),mn=Math.min(r,g,b);const sa=mx?(mx-mn)/mx:0;return sa<0.3||mx<85||(sa>0.8&&r>120)};
+  const topAt=cx0=>{
+    const hw=Math.max(3,Math.round(D/3)),x0=Math.round(cx0),R=Math.round(D/2),f=new Float32Array(top);
+    for(let y=0;y<top;y++){let k=0,t=0;for(let x=x0-hw;x<=x0+hw;x++){if(x<0||x>=W)continue;t++;if(isC(y*W+x))k++}f[y]=t?k/t:0}
+    let best=null;
+    for(let y=y0+R;y<top-R;y++){let s2=0;for(let k=-R;k<=R;k++)s2+=f[y+k];if(s2>=0.6*(2*R+1)&&(!best||s2>best.s))best={s:s2,y}}
+    if(best){let y1=best.y;while(y1+1<top-R){let s2=0;for(let k=-R;k<=R;k++)s2+=f[y1+1+k];if(s2<best.s-1e-6)break;y1++}best.y=(best.y+y1)/2}
+    return best?best.y:null;
+  };
+  res.forEach(col=>{col.ty=topAt(col.x)});
+  // colour of each total circle: dark = Tài, light grey = Xỉu
+  res.forEach(col=>{col.tc=null;if(col.ty==null)return;const r0=Math.max(2,Math.round(D*0.3)),cx=Math.round(col.x),cy=Math.round(col.ty),L=[];
+    for(let yy=cy-r0;yy<=cy+r0;yy++)for(let xx=cx-r0;xx<=cx+r0;xx++){if(xx<0||yy<0||xx>=W||yy>=H)continue;const q=(yy*W+xx)*4,r=px[q],g=px[q+1],b=px[q+2],mx=Math.max(r,g,b),mn=Math.min(r,g,b);if(mx-mn<40)L.push((r+g+b)/3)}
+    if(L.length<4)return;L.sort((a,b)=>a-b);col.lum=L[L.length>>1]});
+  {const ls=res.map(c=>c.lum).filter(v=>v!=null);if(ls.length){const lo=Math.min(...ls),hi=Math.max(...ls);if(hi-lo>60){const th=(hi+lo)/2;res.forEach(c=>{if(c.lum!=null&&Math.abs(c.lum-th)>(hi-lo)*0.2)c.tc=c.lum<th?1:0})}}}
+  if(res.length>=3){const mg=(res[res.length-1].x-res[0].x)/(res.length-1);
+    for(const xe of [res[0].x-mg,res[res.length-1].x+mg])if(xe>D&&xe<W-D&&topAt(xe)!=null){
+      let k=0;const yy=Math.round(ymin),y1=Math.round(ymax);for(let y=yy-D;y<=y1+D;y++){const q=y*W+Math.round(xe);if(q>=0&&q<N&&cls[q])k++}
+      if(k>D*0.8)throw new Error('Có cột ở mép ảnh không đọc được, hãy chụp lại rõ hơn hoặc rộng hơn một chút');}}
+
+  // calibrate y -> total with columns whose 3 dots are all visible (least squares, then drop outliers)
+  let fit=null;{
+    let pts=res.filter(c=>c.ty!=null&&c.r.every(Boolean)).map(c=>[c.r[0]+c.r[1]+c.r[2],c.ty]);
+    for(let it=0;it<2&&pts.length>=5;it++){
+      const n=pts.length,mx=pts.reduce((s,p)=>s+p[0],0)/n,my=pts.reduce((s,p)=>s+p[1],0)/n;
+      let sxx=0,sxy=0;pts.forEach(p=>{sxx+=(p[0]-mx)**2;sxy+=(p[0]-mx)*(p[1]-my)});
+      if(!sxx)break;const b=sxy/sxx,a=my-b*mx;if(b>=0)break;fit={a,b};
+      pts=pts.filter(p=>Math.abs((p[1]-a)/b-p[0])<0.5);
+    }
+    if(fit&&pts.length<5)fit=null;
+  }
+  res.forEach(c=>{const tf=fit&&c.ty!=null?(c.ty-fit.a)/fit.b:null;c.t=tf!=null&&Math.abs(tf-Math.round(tf))<0.25?Math.round(tf):null;if(c.t!=null&&(c.t<3||c.t>18))c.t=null});
+  // use totals to fill hidden dots when that leaves only one choice
+  res.forEach(col=>{
+    const miss=[0,1,2].filter(i=>!col.r[i]);if(!miss.length||col.t==null||!col.vis.length)return;
+    const known=col.r.reduce((s,v)=>s+(v||0),0),opts=[];
+    const rec=(k,acc)=>{if(k===miss.length){if(known+acc.reduce((s,v)=>s+v,0)===col.t)opts.push(acc.slice());return}for(const v of col.vis){acc.push(v);rec(k+1,acc);acc.pop()}};
+    rec(0,[]);
+    if(opts.length===1)miss.forEach((i,k)=>{col.r[i]=opts[0][k]});else if(opts.length>1){col.opts=opts;col.miss=miss}
+    else if(miss.length===1){const v=col.t-known,c=miss[0]+1;if(v>=1&&v<=6){
+      const rr=Math.max(2,Math.round(D*0.35)),cx=Math.round(col.x),cy=Math.round(yOf(v));let k=0,n=0;
+      for(let yy=cy-rr;yy<=cy+rr;yy++)for(let xx=cx-rr;xx<=cx+rr;xx++){if(xx<0||yy<0||xx>=W||yy>=H)continue;n++;if(cls[yy*W+xx]===c)k++}
+      if(n&&k/n>=0.2){col.r[miss[0]]=v;col.unsure.push(c)}}}
+  });
+  // resolve hidden dots
+  const score=(c,j,v)=>{let s=0;const x0=res[j].x,y0=yOf(v),rad=D/2;
+    for(const k of [j-1,j+1]){if(k<0||k>=res.length)continue;const vk=res[k].r[c-1];const cands=vk?[vk]:res[k].vis;
+      for(const w of cands){const x1=res[k].x,y1=yOf(w),dx=x1-x0,dy=y1-y0,len=Math.hypot(dx,dy);
+        let hit=0,tot=0;for(let t=rad+3;t<Math.min(rad+14,len-rad);t+=1){const x=Math.round(x0+dx*t/len),y=Math.round(y0+dy*t/len);tot++;let f=0;for(let ox=-1;ox<=1&&!f;ox++)for(let oy=-1;oy<=1&&!f;oy++){const q=(y+oy)*W+x+ox;if(q>=0&&q<N&&cls[q]===c)f=1}hit+=f}
+        if(tot)s=Math.max(s,hit/tot)+ (vk?0:0);}}
+    return s};
+  for(let pass=0;pass<3;pass++)res.forEach((col,j)=>{for(let c=1;c<=3;c++){if(col.r[c-1])continue;const vis=col.vis;if(!vis.length)continue;
+    if(vis.length===1&&pass===0){col.r[c-1]=vis[0];continue}
+    if(pass===0)continue;
+    const sc=vis.map(v=>[v,score(c,j,v)]).sort((a,b)=>b[1]-a[1]);
+    if(sc[0][1]>0&&(sc.length<2||sc[0][1]>sc[1][1]+0.15)||pass===2){col.r[c-1]=sc[0][0];col.hidden=1;if(pass===2&&!(sc[0][1]>sc[1][1]+0.15))col.unsure.push(c)}}});
+  res.forEach((col,j)=>{if(!col.opts||!col.r.every(Boolean))return;const sm=col.r[0]+col.r[1]+col.r[2];if(sm===col.t)return;
+    let best=null;col.opts.forEach(o=>{const sc=o.reduce((s2,v,k)=>s2+score(col.miss[k]+1,j,v),0);if(!best||sc>best.sc)best={o,sc}});
+    col.miss.forEach((i,k)=>{col.r[i]=best.o[k]});col.unsure=col.miss.map(i=>i+1)});
+  const out=res.filter(c=>c.r.every(Boolean)).map(c=>{const sm=c.r[0]+c.r[1]+c.r[2],u=c.unsure.map(k=>k-1),txBad=c.tc!=null&&(sm>=11?1:0)!==c.tc;return {d:c.r,u:(c.t!=null&&c.t!==sm)||txBad?[0,1,2]:u,t:c.t,tc:c.tc,txBad}});
+  const tys=res.map(c=>c.ty).filter(v=>v!=null);
+  out.meta={top:tys.length?Math.min(...tys)-D*1.2:ymin-(ymax-ymin)*1.6,x0:res[0].x,x1:res[res.length-1].x,D};
+  return out;
+}
+
+function parseChart(px,W,H){
+  const Ls=[...new Set([7,10,13,17,22,Math.max(10,Math.round(W*0.011))])];let runs=[],lastErr=null;
+  const ok=x=>x.t!=null&&x.t===x.d[0]+x.d[1]+x.d[2]&&!x.u.length;
+  for(const L of Ls){try{const r=parseCore(px,W,H,L);runs.push({r,score:r.filter(ok).length*1000+r.length*10-r.filter(x=>x.u.length).length})}catch(e){lastErr=e}}
+  if(!runs.length)throw lastErr||new Error('Không đọc được ảnh');
+  runs.sort((a,b)=>b.score-a.score);
+  const best=runs[0].r.map(x=>({d:x.d.slice(),u:x.u.slice(),t:x.t,tc:x.tc,txBad:x.txBad}));
+  // per column: if the best reading is not verified, borrow a verified reading of the same column from another pass
+  best.forEach((x,i)=>{if(ok(x))return;
+    const votes=new Map();
+    for(const run of runs){if(run.r.length!==best.length)continue;const y=run.r[i];if(!ok(y))continue;if(x.t!=null&&y.t!==x.t)continue;const k=y.d.join('-');votes.set(k,(votes.get(k)||{n:0,y}));votes.get(k).n++}
+    if(votes.size===1){const y=[...votes.values()][0].y;best[i]={d:y.d.slice(),u:[],t:y.t,tc:y.tc,txBad:false}}
+  });
+  best.meta=runs[0].r.meta;
+  return best;
+}
+const OCR_LEARNED={"#":{"ar":0.8,"v":[-91,-91,-91,-91,-91,-36,46,39,-41,-41,5,22,45,25,-65,-65,-91,-91,-91,-91,-75,-28,48,44,-22,-41,15,24,48,29,-65,-65,-91,-91,-91,-91,-33,0,52,52,-3,-23,30,31,52,30,-65,-65,-91,-91,-91,-91,-3,21,53,53,-4,-3,36,36,53,23,-65,-65,-91,-91,-66,-49,24,37,53,53,10,16,44,44,53,22,-45,-45,-91,-71,-11,10,49,53,53,53,39,43,53,53,53,39,0,-26,-91,-42,34,38,53,53,53,53,53,53,53,53,53,52,40,-1,-91,-31,49,49,53,53,53,53,53,53,53,53,53,53,53,24,-91,-42,7,14,52,52,53,53,42,42,53,53,52,48,19,-19,-91,-72,-63,-31,51,51,53,40,17,30,53,53,43,12,-40,-64,-83,-83,-60,-7,52,52,53,28,19,42,53,53,35,-19,-54,-54,-50,-42,7,35,53,53,53,41,44,53,53,53,44,14,-44,-44,-4,7,48,48,53,53,53,53,53,53,53,53,53,50,-18,-38,18,24,53,53,53,53,53,53,53,53,53,53,53,53,8,-32,-15,-4,41,41,53,53,50,50,52,52,53,53,35,28,-41,-61,-70,-62,20,29,53,53,36,37,51,51,53,46,-17,-23,-91,-91,-91,-91,7,25,53,52,8,12,48,48,53,34,-59,-59,-91,-91,-91,-91,3,22,53,48,-11,-1,46,46,53,27,-67,-67,-91,-91,-91,-91,-13,1,41,33,-35,-20,31,31,39,8,-79,-79,-91,-91,-91,-91,-42,-29,20,6,-74,-65,7,9,11,-27,-91,-91,-91,-91,-91,-91,-54,-37,10,-8,-91,-91,-4,1,-4,-45,-91,-91,-91,-91]},"2":{"ar":0.702,"v":[-87,-87,-72,-48,-22,-5,14,15,17,8,-12,-45,-87,-87,-87,-87,-47,-43,-16,0,20,28,38,39,39,35,25,5,-32,-56,-87,-87,-2,6,42,48,62,62,62,62,62,62,62,58,37,-15,-87,-87,3,10,47,51,62,61,62,62,62,62,62,62,57,22,-36,-44,-4,6,49,53,56,50,49,54,60,62,62,62,62,52,18,-1,-49,-36,-4,-6,-6,-15,-25,-20,-3,27,59,59,62,57,26,3,-87,-81,-69,-71,-63,-67,-87,-87,-66,-10,56,56,62,60,32,7,-78,-78,-85,-82,-75,-77,-87,-87,-66,-11,53,55,62,59,32,7,-69,-69,-87,-87,-87,-87,-87,-80,-55,-7,51,53,62,56,28,7,-78,-78,-87,-87,-87,-87,-81,-56,-19,11,56,57,62,40,7,-2,-87,-87,-87,-87,-87,-87,-65,-28,9,28,62,62,58,24,-11,-11,-87,-87,-87,-87,-82,-67,-28,5,36,45,62,59,42,-1,-49,-49,-87,-87,-87,-87,-67,-34,2,25,61,62,60,44,18,-22,-87,-87,-87,-87,-81,-64,-28,2,34,43,62,60,44,7,-26,-43,-87,-87,-87,-87,-64,-27,5,25,62,62,60,44,19,-17,-59,-64,-87,-87,-73,-62,-15,15,35,43,62,62,56,32,11,-10,-46,-52,-69,-69,-37,-23,26,43,62,62,62,62,59,43,29,18,-5,-13,-39,-51,4,7,43,51,62,62,62,62,62,58,53,50,42,38,10,-9,23,23,58,59,62,62,62,62,62,62,62,62,62,62,47,32,3,5,37,39,44,44,44,44,44,44,44,44,43,40,19,4,-18,-13,16,19,26,26,26,26,26,26,26,26,25,17,-9,-25]},"7":{"ar":0.75,"v":[-15,-11,12,22,44,44,44,44,44,44,44,44,43,39,5,-18,-11,0,38,44,58,58,58,58,58,58,58,58,57,55,30,13,-6,12,64,66,71,71,71,71,71,71,71,71,71,71,56,43,-1,18,64,66,71,71,71,71,71,71,71,71,71,71,57,45,-14,0,45,50,54,54,54,55,56,64,71,71,71,69,52,33,-43,-40,-21,-18,-15,-15,-15,-8,19,45,71,71,71,65,38,11,-55,-58,-67,-67,-67,-67,-62,-42,8,41,71,71,70,52,15,-13,-61,-63,-67,-67,-67,-67,-58,-29,26,51,71,71,66,37,-11,-34,-67,-67,-67,-67,-67,-67,-50,-17,40,54,71,70,55,23,-32,-43,-67,-67,-67,-67,-67,-67,-39,2,57,62,71,67,40,2,-54,-57,-64,-67,-67,-67,-62,-51,-25,16,68,69,71,53,16,-20,-67,-67,-57,-67,-67,-67,-57,-30,12,37,70,70,67,38,-10,-37,-67,-67,-50,-67,-67,-67,-49,-16,41,54,71,70,56,24,-30,-44,-67,-67,-47,-67,-67,-63,-35,3,56,61,71,67,41,4,-54,-56,-67,-67,-49,-67,-62,-46,-20,16,67,68,71,53,18,-18,-67,-67,-67,-67,-56,-67,-53,-25,12,37,69,69,68,39,-8,-36,-67,-67,-67,-67,-64,-67,-45,-11,41,55,71,71,57,25,-29,-43,-67,-67,-67,-67,-61,-58,-34,3,57,61,71,68,44,6,-53,-56,-67,-67,-67,-67,-55,-46,-26,13,63,64,63,51,22,-18,-67,-67,-67,-67,-67,-67,-61,-51,-30,5,45,46,37,15,-23,-46,-67,-67,-67,-67,-67,-67,-67,-58,-36,-5,31,31,20,-6,-52,-61,-67,-67,-67,-67,-67,-67]},"0":{"ar":0.748,"v":[-103,-103,-103,-103,-103,-48,-9,-1,11,11,-5,-32,-103,-103,-103,-103,-96,-96,-91,-65,-37,-5,20,24,31,31,23,9,-37,-55,-88,-88,-89,-89,-60,-11,32,37,50,50,50,50,50,50,34,9,-73,-73,-82,-82,-18,15,42,43,50,50,50,50,50,50,44,37,-34,-62,-75,-56,12,25,50,50,50,38,31,43,50,50,50,50,14,-52,-68,-21,30,34,50,50,33,-18,-31,-2,30,38,50,50,33,-16,-60,4,41,42,50,50,9,-63,-74,-56,5,25,50,50,44,26,-39,16,44,44,50,50,-10,-71,-88,-88,-11,19,50,50,46,37,-16,22,47,47,50,50,-22,-79,-103,-103,-22,12,50,50,48,43,-13,23,47,47,50,50,-24,-79,-103,-103,-24,12,50,50,49,45,-12,23,48,48,50,50,-24,-79,-103,-103,-25,11,49,49,49,46,-13,23,48,48,50,50,-24,-79,-103,-103,-25,11,49,49,49,46,-15,23,48,48,50,50,-24,-79,-103,-103,-23,11,49,49,49,44,-36,20,47,47,50,50,-20,-79,-103,-103,-19,12,50,50,49,40,-55,9,46,46,50,50,-11,-79,-103,-103,-12,12,50,50,49,31,-63,-15,40,43,50,50,19,-33,-53,-43,17,27,50,50,46,15,-71,-52,31,40,50,50,41,26,14,25,40,42,50,50,34,-14,-87,-87,-2,31,48,48,45,44,41,41,45,46,49,45,-15,-44,-103,-103,-48,7,47,47,50,50,50,50,50,50,45,24,-56,-56,-103,-103,-85,-56,5,20,41,46,48,48,41,31,-13,-35,-79,-79,-103,-103,-103,-103,-37,-7,33,41,47,46,32,13,-68,-77,-103,-103]},"8":{"ar":0.792,"v":[-118,-118,-118,-118,-110,-69,-31,-16,-1,0,-20,-34,-75,-118,-118,-118,-118,-118,-108,-86,-51,-20,7,15,22,23,13,6,-18,-45,-93,-118,-118,-115,-82,-42,10,28,45,45,46,46,46,46,41,33,-57,-118,-118,-110,-39,-5,28,36,45,45,34,34,43,46,44,42,-8,-60,-118,-107,-9,19,44,45,44,29,-8,-6,37,46,46,46,32,3,-90,-69,10,27,45,45,34,-2,-71,-71,21,46,46,46,37,14,-62,-33,24,35,46,46,27,-12,-102,-108,10,45,46,46,40,17,-59,-48,14,32,46,46,37,19,-33,-35,28,46,46,46,20,-27,-57,-65,-4,29,46,46,46,45,40,41,45,46,46,43,-12,-69,-64,-80,-45,9,39,43,46,46,45,44,46,46,46,38,-35,-80,-70,-94,-76,-9,33,39,46,46,46,46,46,46,46,40,-37,-91,-63,-78,-36,10,39,42,46,46,46,46,46,46,46,45,6,-33,-39,-44,7,27,45,45,44,30,15,32,44,46,46,46,39,30,-11,-5,24,34,45,45,20,-26,-62,-46,20,43,45,46,43,39,1,19,36,41,46,44,-2,-67,-109,-111,-5,41,45,46,46,43,-27,11,35,40,46,45,14,-36,-96,-98,2,42,45,46,46,42,-56,-5,34,40,46,46,33,11,-54,-59,18,43,45,46,45,35,-88,-59,12,31,46,46,41,37,11,7,36,44,45,46,35,10,-118,-113,-35,17,46,46,46,46,46,46,46,46,46,43,11,-26,-118,-118,-89,-49,3,19,37,41,45,45,38,31,10,-18,-57,-81,-118,-118,-118,-110,-40,-9,29,37,45,45,30,17,-26,-77,-110,-118]},"6":{"ar":0.782,"v":[-94,-94,-94,-94,-94,-94,-94,-74,-24,2,30,30,11,-4,-53,-94,-94,-94,-94,-94,-83,-71,-35,-15,13,25,39,40,26,13,-48,-94,-94,-94,-94,-86,-40,-12,36,46,49,49,49,49,41,31,-43,-94,-94,-94,-73,-40,18,37,48,48,49,49,46,46,33,17,-51,-94,-94,-94,-44,13,46,49,49,49,48,43,26,9,-25,-37,-77,-94,-85,-74,-7,39,49,49,48,43,13,-16,-43,-60,-85,-85,-94,-94,-75,-48,33,49,49,49,46,34,-7,-31,-57,-72,-94,-94,-94,-94,-59,-15,46,49,49,49,47,40,28,29,14,-1,-35,-57,-94,-94,-41,17,49,49,49,49,49,49,49,49,46,46,29,5,-63,-94,-34,28,49,49,49,49,49,49,49,49,48,48,41,39,-13,-66,-27,37,49,49,49,49,48,41,34,41,49,49,49,49,8,-20,0,43,49,49,48,46,8,-30,-25,-7,36,49,49,49,25,15,28,45,49,49,46,40,-36,-94,-70,-59,-1,47,49,49,38,35,32,44,49,49,43,34,-41,-94,-82,-82,-24,43,49,49,39,38,30,40,49,49,39,34,-35,-94,-94,-94,-23,45,49,49,40,37,17,27,49,49,44,43,-5,-60,-81,-68,6,49,49,49,38,28,-29,-8,42,49,49,49,26,3,-17,-2,41,49,49,49,32,3,-70,-56,6,47,49,49,40,40,42,43,49,49,49,48,1,-55,-77,-77,-32,27,46,49,49,49,49,49,49,49,47,26,-61,-94,-85,-85,-67,-43,0,30,42,47,48,47,39,31,-3,-45,-94,-94,-94,-94,-94,-94,-42,11,35,45,46,45,29,12,-50,-94,-94,-94]},"4":{"ar":0.8,"v":[-77,-77,-77,-77,-77,-77,-77,-22,32,48,51,50,43,15,-50,-77,-77,-77,-77,-77,-77,-77,-51,6,42,50,51,51,47,26,-46,-77,-77,-77,-77,-77,-77,-77,-12,41,51,51,51,51,51,38,-41,-77,-77,-77,-77,-77,-77,-44,22,50,51,51,51,51,51,40,-40,-77,-77,-77,-77,-77,-55,10,47,51,51,51,51,51,51,40,-40,-77,-77,-77,-77,-77,-18,39,51,51,51,51,51,51,51,40,-40,-77,-77,-77,-77,-49,17,49,51,51,51,51,51,51,51,40,-40,-77,-77,-77,-67,-7,44,51,51,48,43,47,51,51,51,40,-40,-77,-77,-77,-34,25,51,51,51,32,20,39,51,51,51,40,-40,-77,-77,-51,12,47,51,51,40,-12,-11,33,51,51,51,40,-40,-77,-53,-3,40,51,51,51,21,-49,-24,33,51,51,51,42,-39,-77,3,34,49,51,51,51,28,-9,12,43,51,51,51,48,1,-42,43,49,51,51,51,51,47,43,48,51,51,51,51,51,45,15,51,51,51,51,51,51,51,51,51,51,51,51,51,51,51,39,44,49,51,51,51,51,51,51,51,51,51,51,51,51,51,36,-7,6,21,22,22,22,22,24,36,48,51,51,51,51,36,1,-64,-55,-43,-42,-42,-42,-42,-40,-2,38,51,51,51,46,-9,-53,-77,-77,-77,-77,-77,-77,-77,-77,-27,31,51,51,51,40,-40,-77,-77,-77,-77,-77,-77,-77,-77,-77,-29,30,51,51,51,39,-40,-77,-77,-77,-77,-77,-77,-77,-77,-77,-53,5,34,36,34,16,-49,-77,-77,-77,-77,-77,-77,-77,-77,-77,-77,-20,17,21,16,-7,-57,-77]},"5":{"ar":0.8,"v":[-76,-76,-76,-76,19,45,49,49,49,49,49,49,49,45,26,-76,-44,-76,-76,-42,35,48,50,50,50,50,50,50,50,48,38,-42,-10,-76,-76,-3,50,50,50,50,50,50,50,50,50,50,50,-6,-42,-76,-76,4,50,50,50,50,50,50,50,50,50,50,50,-8,-76,-76,-76,10,50,50,50,50,46,40,40,40,40,38,30,-44,-76,-76,-76,16,50,50,50,45,12,-23,-23,-23,-23,-25,-33,-76,-76,-76,-76,28,50,50,50,42,-8,-76,-76,-76,-76,-76,-76,-76,-76,-76,-47,42,50,50,50,47,26,-13,-13,-23,-36,-76,-76,-76,-76,-76,-14,49,50,50,50,50,50,50,50,40,27,-23,-76,-76,-76,-76,-8,50,50,50,50,50,50,50,50,50,50,40,-22,-76,-76,-76,-41,37,45,44,45,50,50,50,50,50,50,50,41,-38,-76,-76,-76,-26,-18,-20,-18,-13,-13,32,50,50,50,50,50,16,-76,-76,-76,-76,-76,-76,-76,-76,-76,-31,40,50,50,50,50,38,-76,-76,-76,-76,-76,-76,-76,-76,-76,-76,20,50,50,50,50,45,-76,-76,-76,-76,-76,-76,-76,-76,-76,-76,20,50,50,50,50,43,-76,-76,-76,-37,-42,-76,-76,-76,-46,-28,40,50,50,50,50,29,-76,-76,-27,26,21,-13,-13,-13,17,35,50,50,50,50,50,1,-76,-76,34,50,50,50,50,50,50,50,50,50,50,50,24,-47,-76,-76,45,50,50,50,50,50,50,50,50,50,46,21,-39,-76,-76,-76,18,34,44,50,50,50,50,47,39,28,-17,-42,-76,-76,-76,-76,-10,18,37,50,50,50,50,44,28,5,-76,-76,-76,-76]},"1":{"ar":0.5,"v":[-12,-12,-12,15,42,42,48,55,55,55,55,55,25,-5,-5,-5,-12,-12,-12,15,42,42,48,55,55,55,55,55,25,-5,-5,-5,21,21,21,35,48,48,52,55,55,55,55,55,29,3,3,3,55,55,55,55,55,55,55,55,55,55,55,55,33,12,12,12,44,44,44,49,54,54,54,55,55,55,55,55,33,12,12,12,32,32,32,43,53,53,54,55,55,55,55,55,33,12,12,12,-26,-26,-26,-1,25,25,40,55,55,55,55,55,33,12,12,12,-84,-84,-84,-44,-4,-4,26,55,55,55,55,55,33,12,12,12,-84,-84,-84,-64,-44,-44,5,55,55,55,55,55,33,12,12,12,-84,-84,-84,-84,-84,-84,-15,55,55,55,55,55,33,12,12,12,-84,-84,-84,-84,-84,-84,-15,55,55,55,55,55,33,11,11,11,-84,-84,-84,-84,-84,-84,-15,55,55,55,55,55,32,10,10,10,-84,-84,-84,-84,-84,-84,-15,55,55,55,55,55,32,10,10,10,-84,-84,-84,-84,-84,-84,-15,55,55,55,55,55,32,10,10,10,-84,-84,-84,-84,-84,-84,-15,55,55,55,55,55,32,10,10,10,-84,-84,-84,-84,-84,-84,-15,55,55,55,55,55,32,10,10,10,-84,-84,-84,-84,-84,-84,-15,55,55,55,55,55,32,10,10,10,-84,-84,-84,-84,-84,-84,-15,55,55,55,55,55,32,10,10,10,-84,-84,-84,-84,-84,-84,-27,30,30,31,32,32,-3,-37,-37,-37,-84,-84,-84,-84,-84,-84,-40,5,5,7,9,9,-38,-84,-84,-84,-84,-84,-84,-84,-84,-84,-40,5,5,7,9,9,-38,-84,-84,-84]},"9":{"ar":0.782,"v":[-94,-94,-94,-50,12,29,45,46,45,35,11,-42,-94,-94,-94,-94,-94,-94,-45,-3,31,39,47,48,47,42,30,0,-43,-67,-85,-85,-94,-61,26,47,49,49,49,49,49,49,49,46,27,-32,-77,-77,-55,1,48,49,49,49,43,42,40,40,49,49,47,6,-56,-70,3,32,49,49,49,41,-2,-17,3,26,49,49,49,42,-8,-29,28,38,49,49,49,6,-68,-81,-60,-5,43,44,49,49,27,17,37,40,49,49,45,-23,-94,-94,-94,-35,34,39,49,49,40,30,38,39,49,49,43,-24,-82,-82,-94,-41,34,43,49,49,44,32,35,38,49,49,47,-1,-59,-70,-94,-36,40,46,49,49,45,28,15,25,49,49,49,36,-7,-25,-30,8,46,48,49,49,43,0,-20,8,49,49,49,49,41,34,41,48,49,49,49,49,37,-27,-66,-13,39,41,48,48,49,49,49,49,49,49,49,49,28,-34,-94,-63,5,29,46,46,49,49,49,49,49,49,49,49,17,-41,-94,-94,-57,-35,-1,14,29,28,40,47,49,49,49,46,-15,-59,-94,-94,-94,-94,-72,-57,-31,-7,34,46,49,49,49,33,-48,-75,-94,-94,-85,-85,-60,-43,-16,13,43,48,49,49,39,-7,-74,-85,-94,-77,-37,-25,9,26,43,48,49,49,49,46,13,-44,-94,-94,-94,-51,17,33,46,46,49,49,48,48,37,18,-40,-73,-94,-94,-94,-43,31,41,49,49,49,49,46,36,-12,-40,-86,-94,-94,-94,-94,-48,13,26,40,39,25,13,-15,-35,-71,-83,-94,-94,-94,-94,-94,-53,-4,11,30,30,2,-24,-74,-94,-94,-94,-94,-94,-94,-94]}};
+/* ---------- read "#2708872" from the header ---------- */
+const OCR_FONTS=['"Arial Black"','Arial','Helvetica','"Liberation Sans"','"DejaVu Sans"','sans-serif'];
+let OCR_T=null;
+function ocrNorm(get,w,h,S=16){ // grayscale ink (0..1) resized to S x S*1.3 over its ink box
+  const SH=Math.round(S*1.3),out=new Float32Array(S*SH);
+  for(let y=0;y<SH;y++)for(let x=0;x<S;x++){let a=0,n=0;const xs=x*w/S,xe=(x+1)*w/S,ys=y*h/SH,ye=(y+1)*h/SH;
+    for(let yy=Math.floor(ys);yy<Math.ceil(ye);yy++)for(let xx=Math.floor(xs);xx<Math.ceil(xe);xx++){if(xx<0||yy<0||xx>=w||yy>=h)continue;a+=get(xx,yy);n++}
+    out[y*S+x]=n?a/n:0}
+  let m=0;for(const v of out)m+=v;m/=out.length;let d=0;for(let i=0;i<out.length;i++){out[i]-=m;d+=out[i]*out[i]}d=Math.sqrt(d)||1;for(let i=0;i<out.length;i++)out[i]/=d;return out;
+}
+function ocrTemplates(){
+  if(OCR_T)return OCR_T;OCR_T=[];
+  for(const ch in OCR_LEARNED){const t=OCR_LEARNED[ch];OCR_T.push({ch,ar:t.ar,v:Float32Array.from(t.v,x=>x/1000),w:1})}
+  // '3' never seen in screenshots yet: render it with common bold fonts
+  const cv=document.createElement('canvas');cv.width=120;cv.height=120;const g=cv.getContext('2d',{willReadFrequently:true});
+  for(const f of OCR_FONTS){
+    g.fillStyle='#000';g.fillRect(0,0,120,120);g.fillStyle='#fff';g.font=`bold 80px ${f}`;g.fillText('3',15,95);
+    const im=g.getImageData(0,0,120,120).data;let x0=120,x1=-1,y0=120,y1=-1;
+    for(let y=0;y<120;y++)for(let x=0;x<120;x++)if(im[(y*120+x)*4]>128){if(x<x0)x0=x;if(x>x1)x1=x;if(y<y0)y0=y;if(y>y1)y1=y}
+    if(x1<0)continue;const w=x1-x0+1,h=y1-y0+1;
+    OCR_T.push({ch:'3',ar:w/h,v:ocrNorm((x,y)=>im[((y+y0)*120+x+x0)*4]/255,w,h)});
+  }
+  return OCR_T;
+}
+function readHeaderNumber(px,W,H,meta){
+  if(!meta)return null;
+  const yEnd=Math.max(0,Math.round(meta.top)),xA=Math.max(0,Math.round(meta.x0-meta.D*2)),xB=Math.min(W,Math.round(meta.x1+meta.D*2));
+  if(yEnd<8)return null;
+  const wt=(x,y)=>{const i=(y*W+x)*4,r=px[i],g=px[i+1],b=px[i+2],mx=Math.max(r,g,b),mn=Math.min(r,g,b);return mx>165&&mx-mn<70?Math.min(1,(mx-120)/100):0};
+  // text bands: rows with white pixels
+  const rows=[];for(let y=0;y<yEnd;y++){let k=0;for(let x=xA;x<xB;x++)if(wt(x,y)>0.5)k++;rows.push(k)}
+  const bands=[];let s=-1;for(let y=0;y<=rows.length;y++){const on=y<rows.length&&rows[y]>0;if(on&&s<0)s=y;if(!on&&s>=0){if(y-s>=6)bands.push([s,y]);s=-1}}
+  let best=null;
+  for(const [b0,b1] of bands){
+    const bh=b1-b0,cols=[];for(let x=xA;x<xB;x++){let k=0;for(let y=b0;y<b1;y++)if(wt(x,y)>0.5)k++;cols.push(k>0)}
+    let cs=-1,last=-1;const cl=[];
+    for(let i=0;i<=cols.length;i++){if(i<cols.length&&cols[i]){if(cs<0)cs=i;last=i}else if(cs>=0&&(i-last>bh*0.6||i===cols.length)){cl.push([cs+xA,last+xA+1]);cs=-1}}
+    for(const [c0,c1] of cl){const ar=(c1-c0)/bh;if(ar<4.8||ar>6.5)continue;
+      let y0=b1,y1=b0;for(let y=b0;y<b1;y++)for(let x=c0;x<c1;x++)if(wt(x,y)>0.5){if(y<y0)y0=y;if(y>y1)y1=y}
+      if(y1+1-y0<0.8*bh)continue;
+      if(!best||bh>best.h)best={x0:c0,x1:c1,y0,y1:y1+1,h:y1+1-y0}}
+  }
+  if(!best)return null;
+  const T=ocrTemplates(),cell=(best.x1-best.x0)/8;let txt='',conf=1;
+  for(let k=0;k<8;k++){
+    const cx0=Math.round(best.x0+k*cell),cx1=Math.round(best.x0+(k+1)*cell);
+    let x0=cx1,x1=cx0-1,y0=best.y1,y1=best.y0-1;
+    for(let y=best.y0;y<best.y1;y++)for(let x=cx0;x<cx1;x++)if(wt(x,y)>0.4){if(x<x0)x0=x;if(x>x1)x1=x;if(y<y0)y0=y;if(y>y1)y1=y}
+    if(x1<x0)return null;const w=x1-x0+1,h=y1-y0+1,ar=w/h;
+    const v=ocrNorm((x,y)=>wt(x+x0,y+y0),w,h,16);
+    const sc={};for(const t of T){let c=0;for(let i=0;i<v.length;i++)c+=v[i]*t.v[i];c-=Math.abs(Math.log(ar/t.ar))*0.35;if(!(t.ch in sc)||c>sc[t.ch])sc[t.ch]=c}
+    const order=Object.entries(sc).filter(([ch])=>k===0?ch==='#':ch!=='#').sort((a,b)=>b[1]-a[1]);
+    if(k===0){if(order[0][1]<0.4)return null;continue}
+    txt+=order[0][0];conf=Math.min(conf,order[0][1]-(order[1]?order[1][1]:0));
+  }
+  return {n:Number(txt),txt,conf};
+}
+const $=s=>document.querySelector(s);
+const esc=v=>String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const COL=['p','r','g'],CV=['var(--p)','var(--r)','var(--g)'];
+const okD=d=>Array.isArray(d)&&d.length===3&&d.every(x=>Number.isInteger(x)&&x>=1&&x<=6);
+const sum=d=>d[0]+d[1]+d[2];
+const tx=t=>t>=11?'Tài':'Xỉu';
+const chips=d=>d.map((x,i)=>`<span class="die ${COL[i]}">${esc(x)}</span>`).join('');
+const SEED={2708624:[2,2,5],2708625:[3,3,1],2708626:[1,5,4],2708627:[5,1,5],2708628:[6,3,3],2708629:[3,6,4],2708630:[3,6,5],2708631:[2,5,3],2708632:[6,3,3],2708633:[6,5,1],2708634:[4,4,1],2708635:[4,5,5],2708636:[6,4,5],2708637:[2,5,3],2708638:[3,4,4],2708639:[1,4,4],2708640:[5,4,3],2708641:[4,1,5],2708642:[4,2,2],2708643:[2,5,5],2708644:[3,2,1],2708645:[6,2,4],2708646:[2,3,6],2708647:[6,1,6]};
+const LS='xucxac.rolls.v1';
+let store=new Map(),mode='local',db=null,downloads=null,canWrite=true,loaded=false,cur=null,queue=[],busy=false;
+
+const opts=[1,2,3,4,5,6].map(n=>`<option>${n}</option>`).join('');
+['#m1','#m2','#m3'].forEach(s=>$(s).innerHTML=opts);
+function status(t,err){for(const s of [$('#status'),$('#pvmsg')]){if(!s)continue;s.textContent=t||'';s.className='status'+(err?' err':'')}}
+function sorted(){return [...store.entries()].sort((a,b)=>a[0]-b[0])}
+
+/* ---------- Google Sheet ---------- */
+const WEB_APP_URL='https://script.google.com/macros/s/AKfycbyYGbIrja5i5tqrHFTJuO3ZJT2yLdRUW0lC5Z5aRy7kHZdti2RP5g1-nEzjInJXqgMl4w/exec'; // link Web App Google Apps Script (kết thúc bằng /exec)
+const PW_KEY='xucxac.sheetpw.v1',PEND_KEY='xucxac.pending.v1',INIT_KEY='xucxac.sheetinit.v1';
+let sheetOn=false,pend={put:{},del:[]},syncing=false,lastSync=null,sheetErr='',lastPull=0,pullAgain=false;
+const lsGet=k=>{try{return localStorage.getItem(k)}catch(e){return null}},lsSet=(k,v)=>{try{v==null?localStorage.removeItem(k):localStorage.setItem(k,v)}catch(e){}};
+function pendLoad(){try{const o=JSON.parse(lsGet(PEND_KEY)||'null');if(o&&o.put&&Array.isArray(o.del))pend=o}catch(e){}}
+function pendSave(){lsSet(PEND_KEY,JSON.stringify(pend))}
+const pendN=()=>Object.keys(pend.put).length+pend.del.length;
+async function api(body){
+  const r=await fetch(WEB_APP_URL,{method:'POST',body:JSON.stringify(Object.assign({},body,{key:lsGet(PW_KEY)||''}))});
+  if(!r.ok)throw new Error('máy chủ trả lỗi '+r.status);
+  let j;try{j=await r.json()}catch(e){throw new Error('máy chủ trả dữ liệu lạ, kiểm tra lại quyền truy cập Web App')}
+  if(!j.ok){const e=new Error(j.error||'lỗi máy chủ');e.auth=/mật khẩu/i.test(j.error||'');throw e}
+  return j;
+}
+async function flushSheet(){
+  if(!sheetOn||syncing||!pendN())return;
+  syncing=true;renderSync();
+  const put=Object.entries(pend.put).map(([p,d])=>[Number(p),...d]),del=pend.del.slice();
+  try{
+    if(put.length)await api({action:'save',rows:put});
+    if(del.length)await api({action:'delete',ps:del});
+    put.forEach(([p,a,b,c])=>{const v=pend.put[p];if(v&&v.join()===[a,b,c].join())delete pend.put[p]});
+    pend.del=pend.del.filter(p=>!del.includes(p));pendSave();lastSync=new Date();sheetErr='';
+  }catch(e){sheetErr=e instanceof TypeError?'mất kết nối, sẽ gửi lại sau':e.message;if(e.auth){sheetOn=false;lsSet(PW_KEY,null)}}
+  syncing=false;renderSync();
+  if(pendN()&&!sheetErr)flushSheet();
+}
+async function pullSheet(){
+  if(!sheetOn)return;
+  if(syncing){pullAgain=true;return}
+  syncing=true;renderSync();lastPull=Date.now();
+  try{
+    const j=await api({action:'list'}),m=new Map();
+    j.rows.forEach(([p,a,b,c])=>{const d=[a,b,c];if(Number.isInteger(p)&&okD(d))m.set(p,d)});
+    const first=lsGet(INIT_KEY)!=='1';
+    // lần đầu kết nối: đẩy các phiên chỉ có trên máy lên Sheet
+    if(first)for(const [p,d] of store)if(!m.has(p)||m.get(p).join()!==d.join()){if(!m.has(p))pend.put[p]=d.slice()}
+    for(const p in pend.put)m.set(Number(p),pend.put[p].slice());
+    pend.del.forEach(p=>m.delete(p));
+    store=m;lsSave();pendSave();lsSet(INIT_KEY,'1');lastSync=new Date();sheetErr='';
+    render();if(cur)renderPreview();
+  }catch(e){sheetErr=e instanceof TypeError?'mất kết nối, đang dùng bản trên máy':e.message;if(e.auth){sheetOn=false;lsSet(PW_KEY,null)}}
+  syncing=false;renderSync();
+  if(pullAgain){pullAgain=false;pullSheet();return}
+  flushSheet();
+}
+function renderSync(){
+  const el=$('#sync');if(!el)return;
+  if(mode!=='local'){el.innerHTML='';return}
+  if(!WEB_APP_URL){el.innerHTML='<span class="dot off"></span>Chưa gắn link Google Sheet, dữ liệu chỉ lưu trên máy này.';return}
+  if(!sheetOn){el.innerHTML=`<form id="pwf" class="pwf"><span class="dot off"></span><label for="pwi">Mật khẩu Google Sheet</label><input id="pwi" type="password" autocomplete="current-password" required><button class="primary" type="submit">Kết nối</button>${sheetErr?`<span class="serr">${esc(sheetErr)}</span>`:''}</form>`;return}
+  const n=pendN(),t=lastSync?lastSync.toLocaleTimeString('vi-VN',{hour:'2-digit',minute:'2-digit'}):'';
+  el.innerHTML=`<span class="dot ${sheetErr?'err':syncing?'busy':n?'busy':'on'}"></span>Google Sheet · ${syncing?'đang đồng bộ…':sheetErr?`lỗi: ${esc(sheetErr)}`:n?`${n} thay đổi chờ gửi`:`đã đồng bộ${t?' lúc '+t:''}`} <button type="button" id="syncnow" class="sbtn">Đồng bộ</button><button type="button" id="logout" class="sbtn">Đăng xuất</button>`;
+}
+document.addEventListener('submit',e=>{if(e.target.id!=='pwf')return;e.preventDefault();const v=$('#pwi').value;if(!v)return;lsSet(PW_KEY,v);sheetOn=true;sheetErr='';pullSheet()});
+document.addEventListener('click',e=>{if(e.target.id==='syncnow'){sheetErr='';pullSheet()}else if(e.target.id==='logout'){lsSet(PW_KEY,null);sheetOn=false;renderSync()}});
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&sheetOn&&Date.now()-lastPull>30000)pullSheet()});
+setInterval(()=>{if(sheetOn&&pendN()&&!syncing)flushSheet()},60000);
+
+/* ---------- storage ---------- */
+function lsLoad(){
+  let o=null;try{o=JSON.parse(localStorage.getItem(LS)||'null')}catch(e){}
+  if(!o)o=WEB_APP_URL?{}:SEED;
+  store=new Map();for(const k in o){const p=Number(k);if(Number.isInteger(p)&&okD(o[k]))store.set(p,o[k].slice())}
+}
+function lsSave(){try{localStorage.setItem(LS,JSON.stringify(Object.fromEntries(store)));return true}catch(e){return false}}
+async function writeRolls(put,dels){
+  if(mode==='db'){
+    const ch=new Map();
+    const touch=p=>{const k=Math.floor(p/1000);if(!ch.has(k)){const m={};for(const [q,d] of store)if(Math.floor(q/1000)===k)m[q]=d;ch.set(k,m)}return ch.get(k)};
+    put.forEach(([p,d])=>{touch(p)[p]=d});dels.forEach(p=>{delete touch(p)[p]});
+    for(const [k,m] of ch)await db.collection('rolls').doc('c'+k).set({r:m});
+  }
+  put.forEach(([p,d])=>store.set(p,d.slice()));dels.forEach(p=>store.delete(p));
+  if(mode==='local'&&!lsSave())throw new Error('trình duyệt không cho lưu dữ liệu');
+  if(mode==='local'&&sheetOn){put.forEach(([p,d])=>{pend.put[p]=d.slice();pend.del=pend.del.filter(q=>q!==p)});dels.forEach(p=>{delete pend.put[p];if(!pend.del.includes(p))pend.del.push(p)});pendSave();renderSync();flushSheet()}
+}
+
+/* ---------- render ---------- */
+function render(){
+  const all=sorted(),n=all.length;
+  if(loaded){const tai=all.filter(([,d])=>sum(d)>=11).length;
+    $('#sum').textContent=n?`${n.toLocaleString('vi-VN')} phiên · #${all[0][0]} → #${all[n-1][0]} · Tài ${tai} / Xỉu ${n-tai}`:'Chưa có phiên nào. Dán ảnh đầu tiên bên dưới.'}
+  let gaps=0;for(let i=1;i<n;i++)gaps+=all[i][0]-all[i-1][0]-1;
+  $('#gap').textContent=gaps?`Còn thiếu ${gaps.toLocaleString('vi-VN')} phiên xen giữa các đoạn đã lưu.`:'';
+  renderHist(all);
+  $('#stats').innerHTML=[0,1,2].map(i=>{
+    const c=[0,0,0,0,0,0];all.forEach(([,d])=>c[d[i]-1]++);
+    const e=n/6,chi=n?c.reduce((s,o)=>s+(o-e)**2/e,0):0;
+    return `<div><strong style="color:${CV[i]}">Xí ngầu ${i+1}</strong>${c.map((o,f)=>{const pc=n?o/n*100:0;return `<div class="bar"><span>${f+1}</span><div class="track"><div class="fill" style="width:${pc.toFixed(1)}%;background:${CV[i]}"></div></div><span class="num">${o} · ${pc.toFixed(1)}%</span></div>`}).join('')}<div class="chi">χ² = ${chi.toFixed(2)}</div></div>`}).join('');
+  renderBT(all);
+}
+
+/* ---------- compact history ---------- */
+let shown=60,selP=null;
+function renderHist(all){
+  const rev=all.slice().reverse(),list=rev.slice(0,shown).reverse();
+  const cell=([p,d])=>{const t=sum(d),c=t>=11?'tai':'xiu';return `<button class="hc ${c}${p===selP?' sel':''}" data-p="${esc(p)}" aria-label="Phiên ${esc(p)}: ${d.join('-')}, tổng ${t}"><div class="pn">#${esc(p)}</div><div>${chips(d)}</div><div class="tt">${t} · ${tx(t)}</div></button>`};
+  let html='',seg=[];
+  const segAll=new Map();{let s0=null,prev=null;for(const [p] of all){if(prev===null||p!==prev+1)s0=p;segAll.set(p,s0);prev=p}}
+  const flush=()=>{if(!seg.length)return;const a=seg[0][0],b=seg[seg.length-1][0],full=all.filter(([p])=>segAll.get(p)===segAll.get(a)).length;
+    html+=`<div class="seg"><b>Đợt #${esc(segAll.get(a))} → #${esc(b)}</b><span>${full} phiên liền nhau</span></div>`+seg.map(cell).join('');seg=[]};
+  list.forEach((r,i)=>{if(i&&r[0]!==list[i-1][0]+1){flush();html+=`<div class="gapm">Thiếu ${(r[0]-list[i-1][0]-1).toLocaleString('vi-VN')} phiên (#${esc(list[i-1][0]+1)} → #${esc(r[0]-1)})</div>`}seg.push(r)});flush();
+  $('#hist').innerHTML=list.length?html:`<p class="empty">${loaded?'Chưa có dữ liệu':'Đang tải…'}</p>`;
+  const more=$('#more');more.hidden=rev.length<=shown;more.textContent=`Xem thêm phiên cũ hơn (còn ${Math.max(0,rev.length-shown)})`;
+  const sb=$('#selbar');
+  if(selP!==null&&store.has(selP)&&canWrite)sb.innerHTML=`<span>Phiên <strong>#${esc(selP)}</strong> (${esc(store.get(selP).join('-'))})</span><button class="x" id="delsel">Xoá phiên này</button><button class="x" id="unsel">Bỏ chọn</button>`;else{sb.innerHTML='';selP=null}
+  drawLine();showInfo();
+}
+const line=$('#tline');
+function drawLine(){
+  const W=line.clientWidth,H=line.clientHeight;if(!W||!H)return;
+  const pts=sorted().slice(-30),n=pts.length;
+  if(!n){line.innerHTML='';return}
+  const pl=W<520?22:30,pr=16,pt=16,pb=16,x=i=>n<2?W/2:pl+i*(W-pl-pr)/(n-1),y=v=>pt+(18-v)*(H-pt-pb)/15,r=W<520?8:11;
+  let s='';
+  [3,6,9,12,15,18].forEach(v=>{s+=`<line x1="${pl}" x2="${W-pr}" y1="${y(v)}" y2="${y(v)}" stroke="#c9a24a" stroke-opacity=".35"/><text x="${pl-6}" y="${y(v)+4}" fill="#e8d7b5" font-size="11" text-anchor="end">${v}</text>`});
+  s+=`<line x1="${pl}" x2="${W-pr}" y1="${y(10.5)}" y2="${y(10.5)}" stroke="#f2c14e" stroke-dasharray="4 4" stroke-opacity=".7"/>`;
+  {let run=[];const fl=()=>{if(run.length>1)s+=`<polyline fill="none" stroke="#fff3a6" stroke-width="2" points="${run.join(' ')}"/>`;run=[]};
+   pts.forEach(([p,d],i)=>{if(i&&p!==pts[i-1][0]+1){fl();const gx=(x(i)+x(i-1))/2;s+=`<line x1="${gx}" x2="${gx}" y1="${pt}" y2="${H-pb}" stroke="#f2c14e" stroke-dasharray="3 4" stroke-opacity=".8"/><text x="${gx}" y="${pt+8}" fill="#f2c14e" font-size="10" text-anchor="middle">đợt mới</text>`}run.push(x(i)+','+y(sum(d)))});fl()}
+  pts.forEach(([p,d],i)=>{const t=sum(d),tai=t>=11,on=p===selP;s+=`<g data-p="${esc(p)}"><circle cx="${x(i)}" cy="${y(t)}" r="${r+8}" fill="transparent"/>${on?`<circle cx="${x(i)}" cy="${y(t)}" r="${r+5}" fill="none" stroke="#fff" stroke-width="3"/>`:''}<title>#${esc(p)}: ${esc(d.join('-'))} = ${t}</title><circle cx="${x(i)}" cy="${y(t)}" r="${r}" fill="${tai?'#2a1a0c':'#c9c9c9'}" stroke="${tai?'#f2c14e':'#8a8a8a'}" stroke-width="2"/>${W>=520?`<text x="${x(i)}" y="${y(t)+4}" font-size="11" font-weight="800" text-anchor="middle" fill="${tai?'#f2c14e':'#333'}">${t}</text>`:''}</g>`});
+  line.innerHTML=s;
+}
+const lineRO=new ResizeObserver(drawLine);lineRO.observe(line);
+function showInfo(){
+  const el=$('#ptinfo'),d=selP!==null?store.get(selP):null;
+  if(!d){el.innerHTML='';return}
+  const t=sum(d);el.innerHTML=`<span class="lbl">#${esc(selP)}</span><span>${chips(d)}</span><span class="tag ${t>=11?'tai':'xiu'}">${t} · ${tx(t)}</span>`;
+}
+line.addEventListener('click',e=>{
+  const g=e.target.closest('g[data-p]');if(!g)return;
+  const p=Number(g.dataset.p);selP=p;
+  const idx=sorted().length-1-sorted().findIndex(r=>r[0]===p);if(idx>=shown)shown=Math.ceil((idx+1)/60)*60;
+  render();
+  const c=document.querySelector(`.hc[data-p="${p}"]`);
+  if(c){c.classList.remove('flash');void c.offsetWidth;c.classList.add('flash');c.scrollIntoView({block:'nearest',behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'})}
+});
+$('#more').addEventListener('click',()=>{shown+=60;render()});
+$('#hist').addEventListener('click',e=>{const b=e.target.closest('[data-p]');if(!b)return;const p=Number(b.dataset.p);selP=selP===p?null:p;render()});
+$('#selbar').addEventListener('click',async e=>{
+  if(e.target.id==='unsel'){selP=null;render();return}
+  if(e.target.id!=='delsel')return;
+  try{await writeRolls([],[selP]);status(`Đã xoá phiên #${selP}.`);selP=null;render()}catch(err){status('Xoá không thành công.',true)}
+});
+
+/* ---------- backtest ---------- */
+const TX=[
+ {n:'Bệt: theo kết quả phiên trước',k:1,f:h=>h[h.length-1]},
+ {n:'Đảo 1-1: ngược phiên trước',k:1,f:h=>1-h[h.length-1]},
+ {n:'Bệt 3 thì bẻ',k:3,f:h=>{const a=h.slice(-3);return a[0]===a[1]&&a[1]===a[2]?1-a[2]:a[2]}},
+ {n:'Theo số đông 10 phiên trước',k:10,f:h=>{const a=h.slice(-10);return a.reduce((x,y)=>x+y,0)*2>=a.length?1:0}},
+ {n:'Ngược số đông 10 phiên trước',k:10,f:h=>{const a=h.slice(-10);return a.reduce((x,y)=>x+y,0)*2>=a.length?0:1}},
+ {n:'Luôn đặt Tài',k:0,f:()=>1},
+ {n:'Luôn đặt Xỉu',k:0,f:()=>0}];
+const DIE=[
+ {n:'Từng viên: lặp lại mặt phiên trước',k:1,f:(h,i)=>h[h.length-1][i]},
+ {n:'Từng viên: mặt ra nhiều nhất 30 phiên trước',k:30,f:(h,i)=>{const c=[0,0,0,0,0,0,0];h.slice(-30).forEach(d=>c[d[i]]++);let b=1;for(let f=2;f<=6;f++)if(c[f]>c[b])b=f;return b}},
+ {n:'Từng viên: mặt ra ít nhất 30 phiên trước ("sắp về")',k:30,f:(h,i)=>{const c=[0,0,0,0,0,0,0];h.slice(-30).forEach(d=>c[d[i]]++);let b=1;for(let f=2;f<=6;f++)if(c[f]<c[b])b=f;return b}}];
+function verdict(hit,n,p0){
+  if(n<30)return '<span class="same">Chưa đủ dữ liệu</span>';
+  const z=(hit/n-p0)/Math.sqrt(p0*(1-p0)/n);
+  return Math.abs(z)<2?`<span class="same">Như may rủi (z = ${z.toFixed(2)})</span>`:`<span class="diff">Lệch khỏi may rủi (z = ${z.toFixed(2)})</span>`;
+}
+function patternStats(all,k){
+  const cnt=new Map();let tries=0,hits=0,h=[],prev=null;
+  for(const [p,d] of all){
+    if(prev!==null&&p!==prev+1)h=[];
+    const y=sum(d)>=11?1:0;
+    if(h.length>=k){const key=h.slice(-k).join(''),c=cnt.get(key);
+      if(c&&c[0]+c[1]>=3&&c[0]!==c[1]){tries++;if((c[1]>c[0]?1:0)===y)hits++}
+      const cc=c?c.slice():[0,0];cc[y]++;cnt.set(key,cc)}
+    h.push(y);prev=p;
+  }
+  const key=h.length>=k?h.slice(-k).join(''):null;
+  return {tries,hits,key,c:key?(cnt.get(key)||[0,0]):null};
+}
+function renderPat(all){
+  const rows=[],none=[];
+  for(let k=3;k<=15;k++){const s=patternStats(all,k);if(!s.key){none.push(k);continue}const n=s.c[0]+s.c[1];if(!n&&!s.tries){none.push(k);continue}rows.push([k,s,n])}
+  const badge=key=>[...key].map(c=>c==='1'?'<b class="pt-t">T</b>':'<b class="pt-x">X</b>').join('');
+  const chip=(h,n)=>{if(n<30)return `<span class="chip w">Chưa đủ dữ liệu (${n}/30 lần)</span>`;const z=(h/n-.5)/Math.sqrt(.25/n);return Math.abs(z)<2?`<span class="chip n">Không hơn đoán bừa</span>`:`<span class="chip a">Lệch khỏi may rủi, cần thêm dữ liệu để chắc</span>`};
+  $('#pat').innerHTML=rows.map(([k,s,n])=>{
+    const T=s.c[1],X=s.c[0],pc=s.tries?s.hits/s.tries*100:0;
+    const split=n?`<div class="split"><span class="st" style="flex:${T||0.0001}">${T?'T '+T:''}</span><span class="sx" style="flex:${X||0.0001}">${X?'X '+X:''}</span></div><div class="sub2">Gặp ${n} lần: Tài ${T}, Xỉu ${X}</div>`:`<div class="sub2">Chưa từng gặp cầu này</div>`;
+    const acc=s.tries?`<div class="acc"><i style="width:${pc.toFixed(1)}%"></i></div><div class="sub2">Đúng ${s.hits}/${s.tries} lần (${pc.toFixed(0)}%)</div>${chip(s.hits,s.tries)}`:`<div class="sub2">Chưa đặt được lần nào</div>`;
+    return `<div class="pr"><div class="k">Cầu ${k} phiên</div><div class="pt">${badge(s.key)}</div><div><div class="lab">Trước đây sau cầu này</div>${split}</div><div><div class="lab">Nếu luôn đặt theo cầu</div>${acc}</div></div>`}).join('')+(none.length?`<div class="prnone">Cầu ${none[0]}${none.length>1?'–'+none[none.length-1]:''} phiên: chưa từng gặp trong dữ liệu, và chưa có lần nào để chạy thử.</div>`:'');
+}
+function renderBT(all){
+  renderPat(all);
+  const tx=TX.map(()=>[0,0]),di=DIE.map(()=>[0,0]);
+  let hT=[],hD=[],prev=null;
+  for(const [p,d] of all){
+    if(prev!==null&&p!==prev+1){hT=[];hD=[]}
+    const y=sum(d)>=11?1:0;
+    TX.forEach((s,j)=>{if(hT.length>=s.k){tx[j][1]++;if(s.f(hT)===y)tx[j][0]++}});
+    DIE.forEach((s,j)=>{if(hD.length>=s.k)for(let i=0;i<3;i++){di[j][1]++;if(s.f(hD,i)===d[i])di[j][0]++}});
+    hT.push(y);hD.push(d);prev=p;
+  }
+  const row=(n,[h,c],p0)=>`<tr><td>${esc(n)}</td><td class="num">${c}</td><td class="num">${c?(h/c*100).toFixed(1)+'%':'–'}</td><td class="num">${(p0*100).toFixed(1)}%</td><td>${verdict(h,c,p0)}</td></tr>`;
+  $('#bt').innerHTML=TX.map((s,j)=>row(s.n,tx[j],.5)).join('')+DIE.map((s,j)=>row(s.n,di[j],1/6)).join('');
+  let R=0,mu=0,v=0,seg=[],pp=null;
+  const flush=()=>{const n=seg.length,n1=seg.filter(x=>x).length,n2=n-n1;if(n>1&&n1&&n2){let r=1;for(let i=1;i<n;i++)if(seg[i]!==seg[i-1])r++;R+=r;mu+=2*n1*n2/n+1;v+=2*n1*n2*(2*n1*n2-n)/(n*n*(n-1))}seg=[]};
+  for(const [p,d] of all){if(pp!==null&&p!==pp+1)flush();seg.push(sum(d)>=11?1:0);pp=p}flush();
+  $('#runs').textContent=v>0&&all.length>=30?`Kiểm định chuỗi Tài/Xỉu (runs test): ${R} chuỗi, kỳ vọng ${mu.toFixed(1)}, z = ${((R-mu)/Math.sqrt(v)).toFixed(2)}. |z| < 2 nghĩa là không có xu hướng bệt hay đảo bất thường.`:'Kiểm định chuỗi Tài/Xỉu: cần ít nhất 30 phiên.';
+}
+
+/* ---------- image reading ---------- */
+async function readImage(file){
+  let bmp;
+  if(window.createImageBitmap){bmp=await createImageBitmap(file)}
+  else{bmp=await new Promise((ok,no)=>{const im=new Image();im.onload=()=>ok(im);im.onerror=no;im.src=URL.createObjectURL(file)})}
+  const w0=bmp.width,h0=bmp.height,sc=w0>2200?2200/w0:1;
+  const W=Math.round(w0*sc),H=Math.round(h0*sc);
+  const cv=document.createElement('canvas');cv.width=W;cv.height=H;
+  const g=cv.getContext('2d',{willReadFrequently:true});g.drawImage(bmp,0,0,W,H);
+  const px=g.getImageData(0,0,W,H).data,rows=parseChart(px,W,H);
+  let hdr=null;try{hdr=readHeaderNumber(px,W,H,rows.meta)}catch(e){}
+  rows.hdr=hdr;return rows;
+}
+function autoAlign(rows){
+  if(!store.size)return null;
+  const n=rows.length,ps=[...store.keys()],mx=Math.max(...ps),mnp=Math.min(...ps),hits=[];
+  for(let N=mnp;N<=mx+n;N++){let ov=0,bad=0;
+    for(let k=0;k<n;k++){const o=store.get(N-(n-1-k));if(o){ov++;if(o.join()!==rows[k].d.join()&&++bad>1)break}}
+    if(bad<=1&&ov>=6)hits.push(N)}
+  return hits.length===1?hits[0]:null;
+}
+async function processFiles(files){
+  if(!files.length)return;
+  if(!canWrite){status('Bạn chỉ có quyền xem.',true);return}
+  queue.push(...files);
+  if(busy||cur)return status(`Còn ${queue.length} ảnh đang chờ. Lưu hoặc huỷ ảnh hiện tại để xem ảnh tiếp theo.`);
+  nextImage();
+}
+async function nextImage(){
+  if(!queue.length){cur=null;renderPreview();return}
+  busy=true;const f=queue.shift();status('Đang đọc ảnh…');
+  try{
+    const rows=await readImage(f);
+    if(rows.length<2)throw new Error('quá ít cột');
+    const A=autoAlign(rows),h=rows.hdr;let N=A,src=A!==null?'align':null,guess=null;
+    const plaus=v=>!store.size||Math.abs(v-Math.max(...store.keys()))<20000;
+    if(h&&Number.isInteger(h.n)&&h.txt.length===7){
+      if(A!==null){if(h.n!==A)src='align-ocrdiff'}
+      else if(h.conf>=0.085&&plaus(h.n)){N=h.n;src='ocr'}
+      else guess=h.n;
+    }
+    cur={rows,N,auto:N!==null,src,guess,ocr:h&&h.n};
+    const nu=rows.filter(r=>r.u.length).length,nt=rows.filter(r=>r.t==null).length;
+    status(`Đọc được ${rows.length} phiên${nt?'':', tổng 3 viên đã khớp với đường tổng điểm'}${nu?`. ${nu} phiên có ô viền vàng cần xem lại`:''}${nt>rows.length/2?'. Không đọc được đường tổng điểm, hãy dán ảnh chụp đủ cả biểu đồ tổng, đúng kích thước gốc (không thu nhỏ) để app tự đối chiếu':''}.${queue.length?` Còn ${queue.length} ảnh chờ.`:''}`);
+  }catch(e){
+    cur=null;status(`Không đọc được ảnh${e&&e.message?` (${e.message})`:''}. Hãy chụp lại bằng Win + Shift + S ở kích thước gốc, đủ cả biểu đồ tổng điểm và 3 đường xí ngầu.`,true);
+  }
+  busy=false;renderPreview();
+  if(!cur&&queue.length)nextImage();
+}
+const verified=r=>r.edited||(r.t!=null&&r.t===sum(r.d)&&!r.u.length);
+const willSave=(r,old)=>!old||(old.join()!==r.d.join()&&(r.edited||(r.t!=null&&r.t===sum(r.d))));
+function completeP(v){
+  if(!store.size||v>=100000)return v;
+  const base=Math.max(...store.keys()),m=10**String(v).length;let c=base-(base%m)+v;
+  if(c<base-m/2)c+=m;else if(c>base+m/2)c-=m;return c;
+}
+function pnum(k){return cur.N-(cur.rows.length-1-k)}
+function renderPreview(){
+  const el=$('#preview');
+  if(!cur){el.innerHTML='';document.body.style.overflow='';return}
+  const hasN=Number.isInteger(cur.N);
+  let nNew=0,nDiff=0,nKeep=0;const nBad=cur.rows.filter(r=>!r.edited&&r.t!=null&&r.t!==sum(r.d)).length,nUnv=cur.rows.filter(r=>!r.edited&&r.t==null).length;
+  const body=cur.rows.map((r,k)=>{const d=r.d,p=hasN?pnum(k):null,old=hasN?store.get(p):null;let st='';
+    if(hasN){if(!old){st='<span class="new">mới</span>';nNew++}else if(old.join()===d.join())st='<span class="same">đã có</span>';else if(willSave(r,old)){st=`<span class="diff">sửa ${esc(old.join('-'))}</span>`;nDiff++}else{st=`<span class="same">khác, giữ ${esc(old.join('-'))}</span>`;nKeep++}}
+    const sel=d.map((x,i)=>`<select class="ds ${COL[i]}${r.u.includes(i)?' uns':''}" data-k="${k}" data-i="${i}" aria-label="Cột ${k+1} xí ngầu ${i+1}">${[1,2,3,4,5,6].map(n=>`<option${n===x?' selected':''}>${n}</option>`).join('')}</select>`).join('');
+    return `<div class="pc"><div class="pn">${hasN?'#'+esc(p):'Cột '+(k+1)}</div>${sel}<div class="tt"><strong>${sum(d)}</strong>${r.edited?' <span class="same">✎</span>':r.t==null?' <span class="mis">?</span>':r.t===sum(d)?' <span class="same">✓</span>':` <span class="mis">≠ ${esc(r.t)}</span>`}</div><div class="st">${st}</div></div>`}).join('');
+  const msg=$('#status').textContent,msgErr=$('#status').classList.contains('err'),allIn=hasN&&nNew+nDiff===0;
+  el.innerHTML=`<div class="pvbox" role="dialog" aria-modal="true" aria-labelledby="pvtitle"><div class="pvtop"><h2 id="pvtitle">Kiểm tra trước khi lưu</h2><button id="pvx" class="x" aria-label="Đóng">✕</button></div><div id="pvmsg" class="status${msgErr?' err':''}">${esc(msg)}</div><div class="pvhead"><label for="pvN"><strong>Phiên gần nhất trong ảnh:</strong></label> #<input id="pvN" type="number" inputmode="numeric" value="${hasN?esc(cur.N):cur.guess?esc(cur.guess):''}" placeholder="vd. 2708872 hoặc 872"${hasN?'':' class="need" autofocus'}><button id="pvN_ok" class="${hasN?'':'primary'}">Áp dụng</button>
+  <span class="hint" style="margin:0">${cur.src==='ocr'?'Đã tự đọc số phiên trong ảnh.':cur.src==='align'?'Đã tự đọc số phiên và khớp với dữ liệu đã lưu.':cur.src==='align-ocrdiff'?`Đã tự khớp với dữ liệu đã lưu (số đọc trong ảnh là #${esc(cur.ocr)}, khác nên lấy theo dữ liệu đã lưu).`:hasN?'':cur.guess?`<b>App đọc được số #${esc(cur.guess)} nhưng chưa chắc chắn.</b> Kiểm tra với ảnh rồi bấm Áp dụng.`:`<b>Gõ số ở dòng "Phiên gần nhất: #…" của ảnh vào ô này</b> (gõ 3 số cuối cũng được), rồi bấm Áp dụng.${store.size?` Phiên cuối đã lưu: #${esc(Math.max(...store.keys()))}.`:''}`}</span></div>
+  <div class="pg">${body}</div>
+  <p class="hint">Cũ bên trái, mới nhất ở cuối, giống biểu đồ trong game. ✓ tổng khớp đường tổng điểm · ≠ chưa khớp · ? chưa đọc được tổng · ✎ bạn đã sửa. Phiên đã lưu chỉ bị ghi đè khi bản mới khớp tổng hoặc do bạn sửa.${nKeep?` ${nKeep} phiên khác bản đã lưu nhưng chưa xác minh nên giữ bản cũ.`:''} So số Tổng với số trên biểu đồ vàng để kiểm tra. ${hasN?`${nNew} phiên mới${nDiff?`, ${nDiff} phiên khác dữ liệu đã lưu (sẽ ghi đè)`:''}.`:''}</p>
+  <div class="pvfoot">${allIn?`<button class="primary big" id="pvclose">Đã có đủ, đóng</button>`:`<button class="primary big" id="pvsave"${hasN&&nNew+nDiff?'':' disabled'}${nBad+nUnv?' style="background:var(--bad);border-color:var(--bad);color:#fff"':''}>${hasN?(nBad+nUnv?`Lưu dù còn ${nBad+nUnv} phiên chưa xác minh`:`Lưu ${nNew+nDiff} phiên`):'Nhập số phiên để lưu'}</button>`}<button id="pvcancel">Huỷ ảnh này</button><span class="keys"><kbd>Enter</kbd> lưu · <kbd>Esc</kbd> huỷ</span></div></div>`;
+  document.body.style.overflow='hidden';
+  setTimeout(()=>{const f=!hasN?$('#pvN'):($('#pvsave:not([disabled])')||$('#pvclose'));if(f&&document.activeElement?.tagName!=='SELECT')f.focus()},0);
+}
+$('#preview').addEventListener('change',e=>{const s=e.target.closest('select');if(!s||!cur)return;cur.rows[Number(s.dataset.k)].d[Number(s.dataset.i)]=Number(s.value);{const r=cur.rows[Number(s.dataset.k)];r.edited=true;r.u=[]}renderPreview()});
+$('#preview').addEventListener('keydown',e=>{if(e.target.id==='pvN'&&e.key==='Enter'){e.preventDefault();e.stopPropagation();$('#pvN_ok').click()}});
+document.addEventListener('keydown',e=>{
+  if(!cur)return;
+  if(e.key==='Escape'){e.preventDefault();$('#pvcancel').click();return}
+  if(e.key==='Enter'&&!['INPUT','SELECT','TEXTAREA','BUTTON'].includes(e.target.tagName)){const b=$('#pvsave:not([disabled])')||$('#pvclose');if(b){e.preventDefault();b.click()}}
+});
+$('#preview').addEventListener('click',async e=>{
+  if(!cur)return;
+  const id=e.target.id;
+  if(id==='pvN_ok'){let v=Number(String($('#pvN').value).replace(/[^0-9]/g,''));if(!Number.isInteger(v)||v<=0){status('Hãy gõ số "Phiên gần nhất: #…" trong ảnh vào ô ngay dưới đây, rồi bấm Áp dụng.',true);$('#pvN').focus();return}v=completeP(v);if(v<cur.rows.length){status('Số phiên quá nhỏ.',true);return}cur.N=v;cur.auto=false;cur.src='user';renderPreview();
+    let ov=0,mis=0;cur.rows.forEach((r,k)=>{const o=store.get(pnum(k));if(o&&verified(r)){ov++;if(o.join()!==r.d.join())mis++}});
+    status(mis>=2?`Cảnh báo: với số phiên này có ${mis}/${ov} phiên không khớp dữ liệu đã lưu. Kiểm tra lại số "Phiên gần nhất".`:'',mis>=2);return}
+  if(id==='pvcancel'||id==='pvx'||id==='pvclose'){cur=null;status(id==='pvclose'?'Ảnh này đã có đủ trong dữ liệu.':'');nextImage();return}
+  if(id!=='pvsave')return;
+  const put=cur.rows.map((r,k)=>[pnum(k),r.d,r]).filter(([p,d,r])=>willSave(r,store.get(p))).map(([p,d])=>[p,d]);
+  e.target.disabled=true;status('Đang lưu…');
+  try{await writeRolls(put,[]);cur=null;render();status(`Đã lưu ${put.length} phiên.`);nextImage()}
+  catch(err){e.target.disabled=false;status(err&&err.code==='quota_exceeded'?'Kho dữ liệu đã đầy.':'Lưu không thành công: '+(err&&err.message||err),true)}
+});
+$('#img').addEventListener('change',e=>{const f=[...e.target.files];e.target.value='';processFiles(f)});
+document.addEventListener('paste',e=>{
+  const t=e.target;if(t&&(t.tagName==='INPUT'||t.tagName==='TEXTAREA'))return;
+  const f=[...(e.clipboardData&&e.clipboardData.items||[])].filter(i=>i.kind==='file'&&i.type.startsWith('image/')).map(i=>i.getAsFile()).filter(Boolean);
+  if(f.length){e.preventDefault();processFiles(f)}
+});
+const zone=$('#imp');
+['dragover','dragenter'].forEach(ev=>zone.addEventListener(ev,e=>{e.preventDefault();zone.classList.add('drop')}));
+['dragleave','drop'].forEach(ev=>zone.addEventListener(ev,()=>zone.classList.remove('drop')));
+zone.addEventListener('drop',e=>{e.preventDefault();processFiles([...(e.dataTransfer&&e.dataTransfer.files||[])].filter(f=>f.type.startsWith('image/')))});
+
+/* ---------- manual, delete, CSV ---------- */
+$('#manual').addEventListener('submit',async e=>{
+  e.preventDefault();
+  const p=Number($('#mp').value),d=[$('#m1'),$('#m2'),$('#m3')].map(s=>Number(s.value));
+  if(!Number.isInteger(p)||p<=0){status('Thêm tay: hãy gõ số phiên vào ô "Số phiên" trước.',true);$('#mp').focus();return}
+  const o=store.get(p),btn=e.submitter||$('#manual button');
+  if(o&&o.join()===d.join()){status(`Phiên #${p} đã có đúng ${d.join('-')}.`);return}
+  if(o&&btn.dataset.armed!==String(p)+d.join()){btn.dataset.armed=String(p)+d.join();btn.textContent=`Ghi đè ${o.join('-')}?`;status(`Phiên #${p} đã lưu là ${o.join('-')}. Bấm lần nữa để thay bằng ${d.join('-')}.`,true);setTimeout(()=>{btn.dataset.armed='';btn.textContent='Thêm tay'},5000);return}
+  btn.dataset.armed='';btn.textContent='Thêm tay';
+  try{await writeRolls([[p,d]],[]);render();$('#mp').value=String(p+1);status(`Đã lưu phiên #${p}: ${d.join('-')} = ${sum(d)}.`)}
+  catch(err){status('Lưu không thành công: '+(err&&err.message||err),true)}
+});
+function csv(){return 'phien,xn1,xn2,xn3,tong,ket_qua\n'+sorted().map(([p,d])=>`${p},${d.join(',')},${sum(d)},${tx(sum(d))}`).join('\n')+'\n'}
+$('#copy').addEventListener('click',async()=>{try{await navigator.clipboard.writeText(csv());$('#copy').textContent='Đã sao chép'}catch(e){$('#copy').textContent='Không sao chép được'}setTimeout(()=>$('#copy').textContent='Sao chép CSV',2000)});
+$('#dl').addEventListener('click',async()=>{
+  const data='﻿'+csv(),name=`xuc-xac-${new Date().toISOString().slice(0,10)}.csv`;
+  if(downloads){try{await downloads.save({filename:name,data})}catch(e){}return}
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([data],{type:'text/csv;charset=utf-8'}));a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1000);
+});
+$('#csvin').addEventListener('change',async e=>{
+  const f=e.target.files[0];e.target.value='';if(!f)return;
+  const put=[];let bad=0,upd=0;
+  (await f.text()).split(/\r?\n/).forEach(l=>{const c=l.replace(/^\ufeff/,'').split(/[,;\t]/).map(s=>s.trim());const p=Number(c[0]),d=c.slice(1,4).map(Number);if(!Number.isInteger(p)||p<=0)return;
+    if(!okD(d)||(c[4]!==undefined&&c[4]!==''&&Number(c[4])!==sum(d))){bad++;return}
+    const o=store.get(p);if(!o){put.push([p,d])}else if(o.join()!==d.join()){put.push([p,d]);upd++}});
+  if(!put.length){status(`Không có phiên mới nào trong file CSV.${bad?` Bỏ qua ${bad} dòng lỗi.`:''}`,!!bad);return}
+  try{await writeRolls(put,[]);render();status(`Đã nhập ${put.length-upd} phiên mới${upd?`, sửa ${upd} phiên`:''} từ CSV.${bad?` Bỏ qua ${bad} dòng lỗi (sai số hoặc tổng không khớp).`:''}`,!!bad)}catch(err){status('Nhập không thành công: '+(err&&err.message||err),true)}
+});
+
+/* ---------- fold state ---------- */
+document.querySelectorAll('details[data-k]').forEach(d=>{
+  try{const v=localStorage.getItem('xucxac.fold.'+d.dataset.k);if(v!==null)d.open=v==='1'}catch(e){}
+  d.addEventListener('toggle',()=>{try{localStorage.setItem('xucxac.fold.'+d.dataset.k,d.open?'1':'0')}catch(e){}});
+});
+
+/* ---------- cài như ứng dụng ---------- */
+{
+  const inst=$('#inst'),standalone=matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
+  let ev=null;
+  const show=html=>{inst.innerHTML=html;inst.hidden=false};
+  if(!standalone&&location.protocol==='https:'){
+    window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();ev=e;show('<button class="inst" id="instbtn">⬇ Cài app vào máy</button><span>Mở như ứng dụng, có icon riêng, dùng được khi mất mạng.</span>')});
+    const ios=/iphone|ipad|ipod/i.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+    if(ios)show('<span>Cài app: bấm nút <b>Chia sẻ</b> của Safari → <b>Thêm vào MH chính</b>.</span>');
+  }
+  inst.addEventListener('click',async e=>{if(e.target.id!=='instbtn'||!ev)return;ev.prompt();const r=await ev.userChoice;ev=null;inst.hidden=true;if(r.outcome==='accepted')status('Đã cài app. Mở bằng icon "Xúc xắc" trên máy.')});
+  window.addEventListener('appinstalled',()=>{inst.hidden=true});
+  if('serviceWorker' in navigator&&(location.protocol==='https:'||location.hostname==='localhost')&&!/claude|anthropic/.test(location.hostname))
+    navigator.serviceWorker.register('sw.js').catch(()=>{});
+}
+
+/* ---------- start ---------- */
+function startLocal(){
+  mode='local';lsLoad();lsSave();loaded=true;pendLoad();
+  $('#mode').textContent=WEB_APP_URL?'Dữ liệu lưu trên Google Sheet, kèm một bản trên máy để dùng khi mất mạng.':'Dữ liệu lưu trong trình duyệt trên máy này. Hãy bấm "Tải CSV" thường xuyên để sao lưu, vì xoá lịch sử trình duyệt sẽ mất dữ liệu.';
+  sheetOn=!!(WEB_APP_URL&&lsGet(PW_KEY));
+  render();renderSync();if(sheetOn)pullSheet();
+}
+render();
+if(typeof window.claude==='undefined'||!window.claude||typeof window.claude.use!=='function'){startLocal()}
+else (async()=>{
+  const [d,dl,u]=await Promise.all(['db','downloads','user'].map(n=>window.claude.use(n).catch(()=>null)));
+  if(dl)downloads=dl;
+  if(u){try{const w=await u.can('data.write');if(w===false)canWrite=false}catch(e){}}
+  if(!canWrite){$('#manual').closest('.card').hidden=true;$('#pick').style.display='none';$('#impl').style.display='none'}
+  if(!d){startLocal();return}
+  mode='db';db=d;
+  $('#mode').textContent='Dữ liệu lưu trên claude.ai, mở ở máy nào cũng thấy.';
+  const t=setTimeout(()=>{if(!loaded)$('#sum').textContent='Chưa tải được dữ liệu, đang thử lại…'},10000);
+  db.collection('rolls').onSnapshot(snap=>{
+    const m=new Map();
+    snap.docs.forEach(doc=>{const r=(doc.data()||{}).r||{};for(const k in r){const p=Number(k),v=r[k];if(Number.isInteger(p)&&okD(v))m.set(p,v.slice())}});
+    store=m;
+    if(!snap.metadata.fromCache){loaded=true;clearTimeout(t)}
+    render();renderPreview();
+  },()=>{clearTimeout(t);loaded=true;$('#sum').textContent='Mất kết nối với nơi lưu trữ.';render()});
+})();
+}
+</script>
+</body></html>

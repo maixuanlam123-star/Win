@@ -1,0 +1,17 @@
+{
+  "name": "Sổ dữ liệu xúc xắc",
+  "short_name": "Xúc xắc",
+  "description": "Lưu và phân tích lịch sử 3 xí ngầu",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#3d2614",
+  "theme_color": "#3d2614",
+  "lang": "vi",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
