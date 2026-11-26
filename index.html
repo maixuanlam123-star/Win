@@ -21,7 +21,7 @@
 :root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
 *{box-sizing:border-box;min-width:0}[hidden]{display:none!important}
 body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 "Be Vietnam Pro",system-ui,sans-serif;overflow-x:clip}
-.band{padding:clamp(20px,4vw,40px) max(5vw,16px)}.wrap{max-width:900px;margin:0 auto}
+.band{padding:clamp(20px,4vw,40px) max(5vw,16px)}.wrap{max-width:1240px;margin:0 auto}
 header.band{background:var(--wal);color:#f6ead8;padding-top:max(clamp(20px,4vw,40px),env(safe-area-inset-top));padding-left:max(5vw,16px,env(safe-area-inset-left));padding-right:max(5vw,16px,env(safe-area-inset-right))}
 h1{font-size:clamp(28px,6vw,40px);line-height:1.05;margin:0 0 6px;color:var(--gold);font-weight:800;text-wrap:balance}
 h2{font-size:20px;margin:0 0 10px}
@@ -108,6 +108,10 @@ th{font-size:13px;color:var(--mute);font-weight:600}
 .h3{font-size:16px;margin:16px 0 4px}.rc.hd{font-size:13px;color:var(--mute);font-weight:600;padding:4px 0;border-top:0}@media(max-width:640px){.rc.hd{display:none}}
 .allcyc{margin-top:10px}.allcyc>summary{cursor:pointer;font-weight:600;color:var(--mute);min-height:36px;display:flex;align-items:center}
 @media(max-width:640px){.rc{grid-template-columns:minmax(0,1fr)}}
+.duo{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px;align-items:start;margin-bottom:16px}
+.duo>.card{margin-bottom:0;container-type:inline-size}
+@media(max-width:1000px){.duo{grid-template-columns:minmax(0,1fr)}}
+@container (max-width:640px){.pr.ph,.rc.hd{display:none}.rc{grid-template-columns:minmax(0,.8fr) minmax(0,1.4fr);row-gap:6px}.rc>div:first-child{grid-row:span 2}.rc>div:nth-child(n+2){grid-column:2}.rc .nm{font-size:17px}.pr{grid-template-columns:minmax(0,1fr) minmax(0,1fr);row-gap:6px}.pr .k{grid-column:1/-1}.pr .pt{grid-column:1/-1}.pr .lab{display:block}}
 .prnone{color:var(--mute);font-size:14px;padding:10px 0}
 @media(max-width:640px){.pr{grid-template-columns:minmax(0,1fr) minmax(0,1fr);row-gap:6px}.pr .k{grid-column:1/-1}.pr .pt{grid-column:1/-1}.pr .lab{display:block}}
 #tline g[data-p]{cursor:pointer}
@@ -182,6 +186,7 @@ kbd{font:inherit;font-size:14px;border:1px solid var(--line);border-bottom-width
 <p class="hint">Vạch dọc là mức 16,7% nếu xúc xắc ngẫu nhiên đều. χ² lớn hơn 11,07 (5 bậc tự do) mới là dấu hiệu lệch, và chỉ đáng tin khi có từ vài nghìn phiên trở lên.</p>
 </details></section>
 
+<div class="duo">
 <section class="card fold"><details data-k="pat" open><summary><h2>Tra cứu cầu đang chạy</h2></summary>
 <div class="pr ph"><div></div><div>Cầu</div><div>Trước đây sau cầu này</div><div>Nếu luôn đặt theo cầu</div></div>
 <div id="pat" class="patl"></div>
@@ -196,6 +201,7 @@ kbd{font:inherit;font-size:14px;border:1px solid var(--line);border-bottom-width
 <div id="runnow"></div>
 <details class="allcyc"><summary>Bảng tất cả các cầu</summary><div class="scroll"><table><thead><tr><th>Cầu</th><th class="num">Số lần khớp</th><th class="num">Theo cầu đúng</th><th>Đánh giá</th></tr></thead><tbody id="runall"></tbody></table></div></details>
 </details></section>
+</div>
 
 <section class="card fold"><details data-k="bt"><summary><h2>Chấm điểm các chiến thuật "soi cầu"</h2></summary>
 <p class="hint" style="margin-top:0">Mỗi chiến thuật được chạy lại trên chính dữ liệu đã lưu, chỉ dùng các phiên liền nhau trước đó, rồi so tỉ lệ đoán đúng với mức may rủi.</p>
