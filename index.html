@@ -69,8 +69,8 @@ th{font-size:13px;color:var(--mute);font-weight:600}
 .sbtn{min-height:32px;padding:0 10px;font-size:13px;background:transparent;color:#f6ead8;border-color:rgba(255,255,255,.35)}
 .inst{background:var(--gold);color:#2a1a0c;border-color:var(--gold);min-height:36px;font-size:14px}
 .serr{color:#ffb4a8;font-weight:600}
-#preview:not(:empty){position:fixed;inset:0;z-index:50;background:rgba(20,13,6,.6);display:grid;place-items:center;padding:12px}
-.pvbox{background:var(--card);color:var(--ink);width:min(1040px,100%);max-height:calc(100vh - 24px);overflow:auto;border-radius:16px;padding:16px 18px 0;box-shadow:0 20px 60px rgba(0,0,0,.4)}
+#preview:not(:empty){position:fixed;inset:0;overflow:hidden;z-index:50;background:rgba(20,13,6,.6);display:grid;place-items:center;padding:12px}
+.pvbox{background:var(--card);color:var(--ink);width:min(1040px,100%,calc(100vw - 24px));max-height:calc(100vh - 24px);overflow:auto;border-radius:16px;padding:16px 18px 0;box-shadow:0 20px 60px rgba(0,0,0,.4)}
 .pvtop{display:flex;justify-content:space-between;align-items:center;gap:10px}.pvtop h2{margin:0}
 .pvfoot{position:sticky;bottom:0;background:var(--card);display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:12px 0 16px;border-top:1px solid var(--line);margin-top:8px}
 .pvfoot .big{min-height:52px;font-size:18px;padding:0 28px}
@@ -712,13 +712,26 @@ async function readImage(file){
   let bmp;
   if(window.createImageBitmap){bmp=await createImageBitmap(file)}
   else{bmp=await new Promise((ok,no)=>{const im=new Image();im.onload=()=>ok(im);im.onerror=no;im.src=URL.createObjectURL(file)})}
-  const w0=bmp.width,h0=bmp.height,sc=w0>2200?2200/w0:1;
-  const W=Math.round(w0*sc),H=Math.round(h0*sc);
-  const cv=document.createElement('canvas');cv.width=W;cv.height=H;
-  const g=cv.getContext('2d',{willReadFrequently:true});g.drawImage(bmp,0,0,W,H);
-  const px=g.getImageData(0,0,W,H).data,rows=parseChart(px,W,H);
-  let hdr=null;try{hdr=readHeaderNumber(px,W,H,rows.meta)}catch(e){}
-  rows.hdr=hdr;return rows;
+  const w0=bmp.width,h0=bmp.height;
+  // ảnh chụp điện thoại để dọc: thử xoay ngang trước
+  const orients=h0>w0*1.15?[-90,90,0]:[0,-90,90];
+  const score=r=>r.filter(x=>x.t!=null&&x.t===x.d[0]+x.d[1]+x.d[2]&&!x.u.length).length*1000+r.length;
+  let best=null,lastErr=null;
+  for(const deg of orients){
+    const rot=deg!==0,bw=rot?h0:w0,bh=rot?w0:h0,sc=Math.min(1,2200/bw);
+    const W=Math.round(bw*sc),H=Math.round(bh*sc);
+    const cv=document.createElement('canvas');cv.width=W;cv.height=H;
+    const g=cv.getContext('2d',{willReadFrequently:true});
+    g.translate(W/2,H/2);g.rotate(deg*Math.PI/180);
+    const dw=Math.round(w0*sc),dh=Math.round(h0*sc);g.drawImage(bmp,-dw/2,-dh/2,dw,dh);
+    const px=g.getImageData(0,0,W,H).data;
+    let rows;try{rows=parseChart(px,W,H)}catch(e){lastErr=e;continue}
+    const s=score(rows);
+    if(!best||s>best.s){let hdr=null;try{hdr=readHeaderNumber(px,W,H,rows.meta)}catch(e){}rows.hdr=hdr;best={rows,s}}
+    if(s>=rows.length*1000*0.8)break; // gần như mọi phiên đã khớp tổng: đúng chiều
+  }
+  if(!best)throw lastErr||new Error('Không đọc được ảnh');
+  return best.rows;
 }
 function autoAlign(rows){
   if(!store.size)return null;

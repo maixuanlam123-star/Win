@@ -1,5 +1,5 @@
 /* Sổ dữ liệu xúc xắc – service worker: chạy offline, tự nhận bản mới */
-const VER = 'xucxac-26-11-2026-c';
+const VER = 'xucxac-26-11-2026-d';
 const SHELL = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './icon-maskable-512.png', './apple-touch-icon.png', './favicon.png'];
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(VER).then(c => c.addAll(SHELL)).then(() => self.skipWaiting()));
