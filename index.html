@@ -97,6 +97,17 @@ th{font-size:13px;color:var(--mute);font-weight:600}
 .pr.ph{padding:0 0 6px;font-size:13px;color:var(--mute);font-weight:600}
 @media(max-width:640px){.pr.ph{display:none}}
 .pr .pt{white-space:normal;display:flex;flex-wrap:wrap;gap:2px}.pr .pt b{margin-right:0}
+.runline{display:flex;flex-wrap:wrap;gap:6px;align-items:flex-end;margin-bottom:12px}
+.rg{display:flex;flex-direction:column;align-items:center;gap:3px}.rg .bx{display:flex;gap:2px}.rg small{font-size:12px;color:var(--mute);font-weight:700}.rg.cur small{color:var(--warn)}
+.rg .bx b{display:inline-block;width:20px;height:20px;line-height:20px;text-align:center;border-radius:5px;font-weight:800;font-size:12px}
+.rg .bx b.pt-t{background:#16110d;color:#f2c14e}.rg .bx b.pt-x{background:#fff;color:#1d1712;box-shadow:inset 0 0 0 1px #b9afa4}
+.rg.cur .bx{outline:2px dashed var(--gold);outline-offset:2px;border-radius:6px}
+.rc{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,1.2fr);gap:12px;align-items:center;padding:10px 0;border-top:1px solid var(--line)}
+.rc .nm{font-size:20px;font-weight:800}.rc .nm small{display:block;font-size:12px;color:var(--mute);font-weight:600}
+.need2{font-weight:700}.need2 b{display:inline-block;padding:1px 10px;border-radius:6px;margin-left:4px}.need2 b.pt-t{background:#16110d;color:#f2c14e}.need2 b.pt-x{background:#fff;color:#1d1712;box-shadow:inset 0 0 0 1px #b9afa4}
+.h3{font-size:16px;margin:16px 0 4px}.rc.hd{font-size:13px;color:var(--mute);font-weight:600;padding:4px 0;border-top:0}@media(max-width:640px){.rc.hd{display:none}}
+.allcyc{margin-top:10px}.allcyc>summary{cursor:pointer;font-weight:600;color:var(--mute);min-height:36px;display:flex;align-items:center}
+@media(max-width:640px){.rc{grid-template-columns:minmax(0,1fr)}}
 .prnone{color:var(--mute);font-size:14px;padding:10px 0}
 @media(max-width:640px){.pr{grid-template-columns:minmax(0,1fr) minmax(0,1fr);row-gap:6px}.pr .k{grid-column:1/-1}.pr .pt{grid-column:1/-1}.pr .lab{display:block}}
 #tline g[data-p]{cursor:pointer}
@@ -176,6 +187,16 @@ kbd{font:inherit;font-size:14px;border:1px solid var(--line);border-bottom-width
 <div id="pat" class="patl"></div>
 </details></section>
 
+<section class="card fold"><details data-k="run" open><summary><h2>Cầu theo chuỗi (1-2-3, 3-2-1, 1-1, 2-2, bệt…)</h2></summary>
+<div class="runline" id="runline"></div>
+<h3 class="h3">Cầu chuỗi đang chạy</h3>
+<div class="rc hd"><div>Cầu (độ dài các chuỗi, chuỗi cuối đang chạy)</div><div>Trước đây sau cầu này</div><div>Nếu luôn đặt theo cầu</div></div>
+<div id="runseq"></div>
+<h3 class="h3">Cầu lặp đang khớp</h3>
+<div id="runnow"></div>
+<details class="allcyc"><summary>Bảng tất cả các cầu</summary><div class="scroll"><table><thead><tr><th>Cầu</th><th class="num">Số lần khớp</th><th class="num">Theo cầu đúng</th><th>Đánh giá</th></tr></thead><tbody id="runall"></tbody></table></div></details>
+</details></section>
+
 <section class="card fold"><details data-k="bt"><summary><h2>Chấm điểm các chiến thuật "soi cầu"</h2></summary>
 <p class="hint" style="margin-top:0">Mỗi chiến thuật được chạy lại trên chính dữ liệu đã lưu, chỉ dùng các phiên liền nhau trước đó, rồi so tỉ lệ đoán đúng với mức may rủi.</p>
 <div class="scroll"><table><thead><tr><th>Chiến thuật</th><th class="num">Số lần thử</th><th class="num">Đúng</th><th class="num">May rủi</th><th>Đánh giá</th></tr></thead><tbody id="bt"></tbody></table></div>
@@ -185,8 +206,9 @@ kbd{font:inherit;font-size:14px;border:1px solid var(--line);border-bottom-width
 
 <section class="card">
 <div class="row sp"><h2 style="margin:0">Lịch sử</h2>
-<div class="row"><button id="copy">Sao chép CSV</button><button id="dl">Tải CSV</button><label class="btn" id="impl">Nhập CSV<input type="file" id="csvin" accept=".csv,text/csv,text/plain" hidden></label></div></div>
+<div class="row"><button id="dl">Lưu file CSV</button><button id="copy">Sao chép</button><label class="btn" id="impl">Nhập CSV<input type="file" id="csvin" accept=".csv,text/csv,text/plain" hidden></label></div></div>
 <p class="hint" id="mode"></p>
+<div id="histmsg" class="status" role="status"></div>
 <p class="hint" id="gap"></p>
 <div class="fig tl"><svg id="tline" role="img" aria-label="Biểu đồ tổng điểm các phiên gần nhất"></svg></div>
 <div id="ptinfo" class="ptinfo" aria-live="polite"></div>
@@ -584,8 +606,84 @@ function renderPat(all){
     const acc=s.tries?`<div class="acc"><i style="width:${pc.toFixed(1)}%"></i></div><div class="sub2">Đúng ${s.hits}/${s.tries} lần (${pc.toFixed(0)}%)</div>${chip(s.hits,s.tries)}`:`<div class="sub2">Chưa đặt được lần nào</div>`;
     return `<div class="pr"><div class="k">Cầu ${k} phiên</div><div class="pt">${badge(s.key)}</div><div><div class="lab">Trước đây sau cầu này</div>${split}</div><div><div class="lab">Nếu luôn đặt theo cầu</div>${acc}</div></div>`}).join('')+(none.length?`<div class="prnone">Cầu ${none[0]}${none.length>1?'–'+none[none.length-1]:''} phiên: chưa từng gặp trong dữ liệu, và chưa có lần nào để chạy thử.</div>`:'');
 }
+/* ---------- cầu theo chuỗi (độ dài các chuỗi Tài/Xỉu liên tiếp) ---------- */
+const CYC=(()=>{const out=[],seen=new Set();
+  for(let k=1;k<=3;k++){const N=4**k;for(let i=0;i<N;i++){const c=[];let v=i;for(let j=0;j<k;j++){c.push(v%4+1);v=Math.floor(v/4)}
+    const rots=c.map((_,s)=>c.slice(s).concat(c.slice(0,s)));
+    if(k>1&&rots.slice(1).some(r=>r.join()===c.join()))continue;
+    const key=rots.map(r=>r.join('-')).sort()[0];if(seen.has(key))continue;seen.add(key);
+    const inc=rots.find(r=>r.every((x,j)=>!j||x>r[j-1])),dec=rots.find(r=>r.every((x,j)=>!j||x<r[j-1]));
+    const nm=k===1?c[0]+'-'+c[0]:(inc||dec||key.split('-').map(Number)).join('-');
+    out.push({c:(inc||dec||key.split('-').map(Number)),name:nm});
+  }}
+  // 3-2-1 là cầu khác với 1-2-3 (chiều giảm)
+  return out;})();
+function cycMatch(c,comp,a){
+  const k=c.length,need=Math.max(2,k-1),M=comp.length;if(M<need)return null;let best=null;
+  for(let p=0;p<k;p++){if(a>c[p])continue;let s=0;while(s<M&&comp[M-1-s]===c[(((p-1-s)%k)+k)%k])s++;if(s>=need&&(!best||s>best.s))best={E:c[p],s}}
+  return best;
+}
+function runAnalysis(all){
+  const stat=CYC.map(()=>[0,0]),bet=[0,0];let now=null;
+  let segs=[],cur=[];all.forEach(([p,d],i)=>{if(i&&p!==all[i-1][0]+1){segs.push(cur);cur=[]}cur.push(sum(d)>=11?1:0)});if(cur.length)segs.push(cur);
+  segs.forEach((seg,si)=>{
+    const runs=[];
+    const step=(y)=>{const L=runs[runs.length-1];if(L&&L.s===y)L.n++;else runs.push({s:y,n:1})};
+    const state=()=>{if(runs.length<2)return null;const r=runs.slice(1),cr=r[r.length-1];return {comp:r.slice(0,-1).map(x=>x.n),a:cr.n,s:cr.s}};
+    for(let i=0;i<seg.length;i++){
+      const st=state();
+      if(st){CYC.forEach((cy,j)=>{const m=cycMatch(cy.c,st.comp,st.a);if(!m)return;const pred=st.a<m.E?st.s:1-st.s;stat[j][1]++;if(pred===seg[i])stat[j][0]++});
+        if(st.a>=4){bet[1]++;if(st.s===seg[i])bet[0]++}}
+      step(seg[i]);
+    }
+    if(si===segs.length-1){const st=state();now={runs:runs.slice(),st}}
+  });
+  return {stat,bet,now};
+}
+function runSeqAnalysis(all,Ks){
+  const res={};Ks.forEach(K=>res[K]={map:new Map(),h:0,n:0,key:null});
+  let segs=[],cur=[];all.forEach(([p,d],i)=>{if(i&&p!==all[i-1][0]+1){segs.push(cur);cur=[]}cur.push(sum(d)>=11?1:0)});if(cur.length)segs.push(cur);
+  segs.forEach((seg,si)=>{
+    const runs=[];
+    for(let i=0;i<=seg.length;i++){
+      const r=runs.slice(1);
+      if(r.length){const cr=r[r.length-1],comp=r.slice(0,-1).map(x=>x.n);
+        for(const K of Ks){if(comp.length<K-1)continue;const key=comp.slice(comp.length-(K-1)).concat(cr.n).join('-'),S=res[K];
+          if(i===seg.length){if(si===segs.length-1)S.key=key;continue}
+          const c=S.map.get(key),y=seg[i]===cr.s?0:1; // 0 = tiếp tục, 1 = đổi
+          if(c&&c[0]+c[1]>=3&&c[0]!==c[1]){S.n++;if((c[1]>c[0]?1:0)===y)S.h++}
+          const cc=c?c.slice():[0,0];cc[y]++;S.map.set(key,cc);
+          if(si===segs.length-1)S.cur={s:cr.s};}}
+      if(i===seg.length)break;
+      const L=runs[runs.length-1];if(L&&L.s===seg[i])L.n++;else runs.push({s:seg[i],n:1});
+      if(si===segs.length-1){const rr=runs.slice(1);if(rr.length)res.lastSide=rr[rr.length-1].s}
+    }
+  });
+  return res;
+}
+function renderRun(all){
+  const R=runAnalysis(all),side=s=>s?'<b class="pt-t">Tài</b>':'<b class="pt-x">Xỉu</b>';
+  const chip=(h,n)=>{if(n<30)return `<span class="chip w">Chưa đủ dữ liệu (${n}/30 lần)</span>`;const z=(h/n-.5)/Math.sqrt(.25/n);return Math.abs(z)<2?`<span class="chip n">Không hơn đoán bừa</span>`:`<span class="chip a">Lệch khỏi may rủi, cần thêm dữ liệu để chắc</span>`};
+  const acc=(h,n)=>n?`<div class="acc"><i style="width:${(h/n*100).toFixed(1)}%"></i></div><div class="sub2">Theo cầu này trước đây: đúng ${h}/${n} lần (${(h/n*100).toFixed(0)}%)</div>${chip(h,n)}`:`<div class="sub2">Chưa có lần nào để chạy thử</div>`;
+  if(!R.now||!R.now.runs.length){$('#runline').innerHTML='<p class="prnone">Chưa có dữ liệu.</p>';$('#runnow').innerHTML='';$('#runall').innerHTML='';return}
+  const rs=R.now.runs.slice(-10);
+  $('#runline').innerHTML=rs.map((r,i)=>{const last=i===rs.length-1,first=R.now.runs.length<=10&&i===0;return `<div class="rg${last?' cur':''}"><div class="bx">${Array.from({length:Math.min(r.n,8)},()=>r.s?'<b class="pt-t">T</b>':'<b class="pt-x">X</b>').join('')}${r.n>8?`<b>+${r.n-8}</b>`:''}</div><small>${first?'?':r.n}${last?' · đang chạy':''}</small></div>`}).join('');
+  const KS=[2,3,4,5,6],Q=runSeqAnalysis(all,KS),ls=Q.lastSide;
+  $('#runseq').innerHTML=KS.map(K=>{const S=Q[K];if(!S.key)return '';const c=S.map.get(S.key)||[0,0],n=c[0]+c[1],T=ls?c[0]:c[1],X=ls?c[1]:c[0];
+    const sp=n?`<div class="split"><span class="st" style="flex:${T||0.0001}">${T?'T '+T:''}</span><span class="sx" style="flex:${X||0.0001}">${X?'X '+X:''}</span></div><div class="sub2">Gặp ${n} lần: phiên kế ra Tài ${T}, Xỉu ${X}</div>`:`<div class="sub2">Chưa từng gặp cầu này</div>`;
+    return `<div class="rc"><div class="nm">Cầu ${S.key.split('-').join('')}<small>${K} chuỗi gần nhất (${S.key})</small></div><div>${sp}</div><div>${acc(S.h,S.n)}</div></div>`}).join('')||'<p class="prnone">Chưa đủ chuỗi để tra.</p>';
+  const st=R.now.st,rows=[];
+  if(st){
+    if(st.a>=4){rows.push(`<div class="rc"><div class="nm">Bệt ${st.s?'Tài':'Xỉu'}<small>đang ${st.a} phiên liền</small></div><div class="need2">Theo cầu: phiên tới ${side(st.s)}</div><div>${acc(R.bet[0],R.bet[1])}</div></div>`)}
+    CYC.forEach((cy,j)=>{const m=cycMatch(cy.c,st.comp,st.a);if(!m)return;const pred=st.a<m.E?st.s:1-st.s;
+      rows.push({s:m.s,html:`<div class="rc"><div class="nm">Cầu ${cy.name}<small>khớp ${m.s+1} chuỗi gần nhất</small></div><div class="need2">Theo cầu: phiên tới ${side(pred)}</div><div>${acc(R.stat[j][0],R.stat[j][1])}</div></div>`})});
+  }
+  const html=rows.map(r=>typeof r==='string'?r:r).sort((a,b)=>(typeof b==='string'?99:b.s)-(typeof a==='string'?99:a.s)).map(r=>typeof r==='string'?r:r.html).join('');
+  $('#runnow').innerHTML=html||'<p class="prnone">Hiện không có cầu nào đang khớp.</p>';
+  $('#runall').innerHTML=[['Bệt (theo bệt khi chuỗi ≥ 4)',R.bet]].concat(CYC.map((c,j)=>['Cầu '+c.name,R.stat[j]])).filter(([,s])=>s[1]).sort((a,b)=>b[1][1]-a[1][1]).map(([n,[h,c]])=>`<tr><td>${esc(n)}</td><td class="num">${c}</td><td class="num">${(h/c*100).toFixed(1)}%</td><td>${chip(h,c)}</td></tr>`).join('')||'<tr><td colspan="4" class="same">Chưa có dữ liệu</td></tr>';
+}
 function renderBT(all){
-  renderPat(all);
+  renderPat(all);renderRun(all);
   const tx=TX.map(()=>[0,0]),di=DIE.map(()=>[0,0]);
   let hT=[],hD=[],prev=null;
   for(const [p,d] of all){
@@ -723,11 +821,21 @@ $('#manual').addEventListener('submit',async e=>{
   catch(err){status('Lưu không thành công: '+(err&&err.message||err),true)}
 });
 function csv(){return 'phien,xn1,xn2,xn3,tong,ket_qua\n'+sorted().map(([p,d])=>`${p},${d.join(',')},${sum(d)},${tx(sum(d))}`).join('\n')+'\n'}
-$('#copy').addEventListener('click',async()=>{try{await navigator.clipboard.writeText(csv());$('#copy').textContent='Đã sao chép'}catch(e){$('#copy').textContent='Không sao chép được'}setTimeout(()=>$('#copy').textContent='Sao chép CSV',2000)});
+function hmsg(t,err){const s=$('#histmsg');s.textContent=t||'';s.className='status'+(err?' err':'');clearTimeout(hmsg.t);if(t&&!err)hmsg.t=setTimeout(()=>{s.textContent=''},12000)}
+$('#copy').addEventListener('click',async()=>{
+  try{await navigator.clipboard.writeText(csv());hmsg(`Đã sao chép ${store.size} phiên vào bộ nhớ tạm (không tạo file). Mở Excel hoặc Google Sheet rồi bấm Ctrl + V để dán.`)}
+  catch(e){hmsg('Không sao chép được. Hãy dùng nút "Lưu file CSV".',true)}
+});
 $('#dl').addEventListener('click',async()=>{
   const data='﻿'+csv(),name=`xuc-xac-${new Date().toISOString().slice(0,10)}.csv`;
-  if(downloads){try{await downloads.save({filename:name,data})}catch(e){}return}
+  if(downloads){try{await downloads.save({filename:name,data});hmsg(`Đã lưu file ${name}.`)}catch(e){}return}
+  // Chrome/Edge trên máy tính: hỏi chỗ lưu
+  if(window.showSaveFilePicker){
+    try{const h=await showSaveFilePicker({suggestedName:name,types:[{description:'File CSV',accept:{'text/csv':['.csv']}}]});const w=await h.createWritable();await w.write(data);await w.close();hmsg(`Đã lưu file ${h.name} vào thư mục bạn chọn.`);return}
+    catch(e){if(e&&e.name==='AbortError')return}
+  }
   const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([data],{type:'text/csv;charset=utf-8'}));a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1000);
+  hmsg(`Đã tải file ${name} vào thư mục Tải xuống (Downloads) của máy.`);
 });
 $('#csvin').addEventListener('change',async e=>{
   const f=e.target.files[0];e.target.value='';if(!f)return;
@@ -735,8 +843,8 @@ $('#csvin').addEventListener('change',async e=>{
   (await f.text()).split(/\r?\n/).forEach(l=>{const c=l.replace(/^\ufeff/,'').split(/[,;\t]/).map(s=>s.trim());const p=Number(c[0]),d=c.slice(1,4).map(Number);if(!Number.isInteger(p)||p<=0)return;
     if(!okD(d)||(c[4]!==undefined&&c[4]!==''&&Number(c[4])!==sum(d))){bad++;return}
     const o=store.get(p);if(!o){put.push([p,d])}else if(o.join()!==d.join()){put.push([p,d]);upd++}});
-  if(!put.length){status(`Không có phiên mới nào trong file CSV.${bad?` Bỏ qua ${bad} dòng lỗi.`:''}`,!!bad);return}
-  try{await writeRolls(put,[]);render();status(`Đã nhập ${put.length-upd} phiên mới${upd?`, sửa ${upd} phiên`:''} từ CSV.${bad?` Bỏ qua ${bad} dòng lỗi (sai số hoặc tổng không khớp).`:''}`,!!bad)}catch(err){status('Nhập không thành công: '+(err&&err.message||err),true)}
+  if(!put.length){hmsg(`Không có phiên mới nào trong file CSV.${bad?` Bỏ qua ${bad} dòng lỗi.`:''}`,!!bad);return}
+  try{await writeRolls(put,[]);render();hmsg(`Đã nhập ${put.length-upd} phiên mới${upd?`, sửa ${upd} phiên`:''} từ CSV.${bad?` Bỏ qua ${bad} dòng lỗi (sai số hoặc tổng không khớp).`:''}`,!!bad)}catch(err){hmsg('Nhập không thành công: '+(err&&err.message||err),true)}
 });
 
 /* ---------- fold state ---------- */
@@ -764,7 +872,7 @@ document.querySelectorAll('details[data-k]').forEach(d=>{
 /* ---------- start ---------- */
 function startLocal(){
   mode='local';lsLoad();lsSave();loaded=true;pendLoad();
-  $('#mode').textContent=WEB_APP_URL?'Dữ liệu lưu trên Google Sheet, kèm một bản trên máy để dùng khi mất mạng.':'Dữ liệu lưu trong trình duyệt trên máy này. Hãy bấm "Tải CSV" thường xuyên để sao lưu, vì xoá lịch sử trình duyệt sẽ mất dữ liệu.';
+  $('#mode').textContent=WEB_APP_URL?'Dữ liệu lưu trên Google Sheet, kèm một bản trên máy để dùng khi mất mạng.':'Dữ liệu lưu trong trình duyệt trên máy này. Hãy bấm "Lưu file CSV" thường xuyên để sao lưu, vì xoá lịch sử trình duyệt sẽ mất dữ liệu.';
   sheetOn=!!(WEB_APP_URL&&lsGet(PW_KEY));
   render();renderSync();if(sheetOn)pullSheet();
 }
