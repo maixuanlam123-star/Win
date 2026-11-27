@@ -317,7 +317,7 @@ kbd{font:inherit;font-size:14px;border:1px solid var(--line);border-bottom-width
 <div class="setlab">Dữ liệu</div><div id="sum" class="sync">Đang tải dữ liệu…</div>
 <div class="setlab">Google Sheet</div><div id="sync" class="sync"></div>
 <div class="setlab">Ứng dụng</div><div><div id="inst" class="sync" hidden></div><div id="instdone" class="sync">Đang mở trong trình duyệt hoặc đã cài.</div></div>
-<div class="setlab">Phiên bản</div><div class="ver">28/11 · s</div>
+<div class="setlab">Phiên bản</div><div class="ver">28/11 · u</div>
 </div>
 </details></section>
 </div></main>
@@ -806,7 +806,7 @@ function renderRun(all){
   if(st){
     if(st.a>=4){rows.push(`<div class="rc2"><div class="nm2">Bệt ${st.s?'Tài':'Xỉu'} (${st.a})</div><div class="arrow">→</div>${nx(st.s)}${strip(R.now.runs.slice(-1),st.s,st.a,'')}<div class="ev2">${R.bet[1]?`theo bệt trước đây đúng ${(R.bet[0]/R.bet[1]*100).toFixed(0)}% / ${R.bet[1]} lần`:''}</div></div>`)}
     CYC.forEach((cy,j)=>{const m=cycMatch(cy.c,st.comp,st.a);if(!m)return;const pred=st.a<m.E?st.s:1-st.s;
-      rows.push({s:m.s,html:`<div class="rc2"><div class="nm2">Cầu ${cy.name}</div><div class="arrow">→</div>${nx(pred)}${strip(R.now.runs.slice(-(m.s+1)),pred,st.a+'/'+m.E,'tiếp · dài '+cy.c[(m.p+1)%cy.c.length])}<div class="ev2">khớp ${m.s+1} chuỗi gần nhất${R.stat[j][1]?` · đúng ${(R.stat[j][0]/R.stat[j][1]*100).toFixed(0)}% / ${R.stat[j][1]} lần`:''}</div></div>`})});
+      rows.push({s:m.s,html:`<div class="rc2"><div class="nm2">Cầu ${cy.name}</div><div class="arrow">→</div>${nx(pred)}${strip(R.now.runs.slice(-Math.min(m.s+1,cy.c.length===1?2:m.p+1)),pred,st.a+'/'+m.E,'tiếp · dài '+cy.c[(m.p+1)%cy.c.length])}<div class="ev2">khớp ${m.s+1} chuỗi gần nhất${R.stat[j][1]?` · đúng ${(R.stat[j][0]/R.stat[j][1]*100).toFixed(0)}% / ${R.stat[j][1]} lần`:''}</div></div>`})});
   }
   const html=rows.map(r=>typeof r==='string'?r:r).sort((a,b)=>(typeof b==='string'?99:b.s)-(typeof a==='string'?99:a.s)).map(r=>typeof r==='string'?r:r.html).join('');
   $('#runnow').innerHTML=html||'<p class="prnone">Hiện không có cầu nào đang khớp.</p>';
