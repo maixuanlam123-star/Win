@@ -19,6 +19,7 @@
    LAYOUT: one column, max 900px; tool, stats, table. */
 :root{color-scheme:light dark;--bg:light-dark(#ffffff,#15110d);--ink:light-dark(#1d1712,#efe8df);--mute:light-dark(#6d6259,#a89c90);--line:light-dark(#e7e0d8,#2e2620);--card:light-dark(#faf7f3,#1d1813);--wal:#3d2614;--gold:#f2c14e;--p:#b13bd4;--r:#d63b3b;--g:#1d9e5f;--bad:light-dark(#b3261e,#ff8a80);--warn:light-dark(#8a5a00,#ffcc66)}
 :root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 *{box-sizing:border-box;min-width:0}[hidden]{display:none!important}
 body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 "Be Vietnam Pro",system-ui,sans-serif;overflow-x:clip}
 .band{padding:clamp(20px,4vw,40px) max(5vw,16px)}.wrap{max-width:1240px;margin:0 auto}
@@ -37,7 +38,7 @@ select,input{min-height:44px;border-radius:10px;border:1px solid var(--line);bac
 .status{margin-top:10px;font-weight:600}.status.err{color:var(--bad)}
 .row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
 .row.sp{justify-content:space-between}
-.die{display:inline-grid;place-items:center;width:30px;height:30px;border-radius:50%;color:#fff;font-weight:800;margin-right:4px;font-size:15px}
+.die{display:inline-grid;place-items:center;width:2em;height:2em;border-radius:50%;color:#fff;font-weight:800;margin-right:.25em;font-size:15px;line-height:1;flex:none;vertical-align:middle}
 .die.p{background:var(--p)}.die.r{background:var(--r)}.die.g{background:var(--g)}
 .legend{display:flex;gap:14px;flex-wrap:wrap;font-size:14px;color:var(--mute);margin:6px 0 0}
 .legend span::before{content:"";display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;background:var(--c)}
@@ -120,6 +121,16 @@ th{font-size:13px;color:var(--mute);font-weight:600}
 .nm2{font-size:19px;font-weight:800;overflow-wrap:anywhere}.arrow{color:var(--mute);font-size:18px}
 .nxt{display:inline-block;min-width:84px;text-align:center;font-weight:800;font-size:18px;border-radius:10px;padding:6px 14px}
 .nxt.t{background:#16110d;color:#f2c14e}.nxt.x{background:#fff;color:#1d1712;box-shadow:inset 0 0 0 2px #1d1712}.nxt.na{background:var(--line);color:var(--mute);font-size:15px}
+.stp{grid-column:1/-1;display:flex;flex-wrap:wrap;align-items:flex-end;gap:6px 6px;margin-top:8px}
+.sg{display:flex;flex-direction:column;align-items:center;gap:3px;padding:4px 5px;border-radius:8px;background:light-dark(#f1ece6,#262019)}
+.sg.cur{box-shadow:inset 0 0 0 1.5px var(--mute)}.sg.nx{background:none;box-shadow:inset 0 0 0 1.5px #2f7cf6}
+.sb{display:flex;gap:2px;align-items:center}
+.sb b{box-sizing:border-box;width:20px;height:20px;padding:0;min-width:0;border-radius:5px;font-size:11px;font-weight:800;display:grid;place-items:center;line-height:1}
+.sb b.qt{background:#16110d;color:#f2c14e}.sb b.qx{background:#fff;color:#1d1712;box-shadow:inset 0 0 0 1px #b9afa4}
+.sb b.q{outline:2px solid #2f7cf6;outline-offset:1px;animation:qp 1.3s ease-in-out infinite}
+@keyframes qp{50%{outline-color:transparent}}
+.sb i{font-style:normal;font-size:11px;font-weight:700;color:var(--mute);padding:0 2px}
+.sg small{font-size:11px;color:var(--mute);white-space:nowrap}.sg.nx small{color:#2f7cf6;font-weight:700}
 .ev2{grid-column:1/-1;font-size:12px;color:var(--mute);margin-top:4px}
 .allcyc{margin-top:10px}.allcyc>summary{cursor:pointer;font-weight:600;color:var(--mute);min-height:36px;display:flex;align-items:center}
 @media(max-width:640px){.rc{grid-template-columns:minmax(0,1fr)}}
@@ -142,12 +153,12 @@ body{padding-bottom:env(safe-area-inset-bottom)}
   .bar1{display:grid;grid-template-columns:minmax(0,1fr);gap:8px}
   .bar1 #pick{min-height:52px;font-size:17px;width:100%;justify-self:stretch}
   .bar1 .or{text-align:center}.bar1 .sep{display:none}
-  #manual{display:grid;grid-template-columns:minmax(0,1.3fr) repeat(3,minmax(0,.8fr));gap:6px}
+  #manual{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
   #manual #mp{width:100%;grid-column:1/-1}
   #manual select{width:100%}
   #manual button{grid-column:1/-1}
   .duo{gap:12px;margin-bottom:12px}
-  #hist.hg{grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:6px}
+  #hist.hg{gap:6px}
   .tl{height:150px}
   .pvbox{padding:12px 12px 0;border-radius:14px}
   #preview .pg{grid-template-columns:repeat(auto-fill,minmax(88px,1fr));gap:6px}
@@ -158,8 +169,6 @@ body{padding-bottom:env(safe-area-inset-bottom)}
 }
 @media(max-width:380px){
   h1{font-size:26px}
-  #hist.hg{grid-template-columns:repeat(3,minmax(0,1fr))}
-  .hc .die{width:20px;height:20px;font-size:12px;margin:2px 0}
   #preview .pg{grid-template-columns:repeat(3,minmax(0,1fr))}
   #preview .pc{padding:5px}#preview .pc .ds{min-height:32px;font-size:15px;padding:0 2px}
   .nm2{font-size:17px}.nxt{min-width:70px;font-size:16px;padding:5px 10px}
@@ -169,6 +178,16 @@ body{padding-bottom:env(safe-area-inset-bottom)}
 .anbad{padding:10px 12px;border-radius:10px;background:light-dark(#fff1cc,#3a2d0c)}.anbad ul{margin:6px 0;padding-left:20px}
 .am{margin-top:10px}
 #anom .sub2{white-space:normal}#anom .acc::after{display:none}#anom .acc i{background:var(--gold)}
+.hbar{margin-top:10px}
+.seg2{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.seg2 button{border:0;border-radius:0;min-height:36px;padding:0 14px;font-size:14px;background:var(--bg)}
+.seg2 button[aria-pressed=true]{background:var(--wal);color:var(--gold)}
+#hist.mini{grid-template-columns:repeat(auto-fill,minmax(34px,1fr));gap:4px}
+.hcm{min-height:34px;height:34px;padding:0;border-radius:7px;font-size:14px;font-weight:800;border:1px solid var(--line);font-variant-numeric:tabular-nums}
+.hcm.tai{background:#16110d;color:#f2c14e;border-color:#16110d}.hcm.xiu{background:#fff;color:#1d1712;border-color:#cfc6bc}
+.hcm.sel{outline:3px solid var(--gold);outline-offset:1px}
+#hist.mini .seg{padding-top:4px}#hist.mini .gapm{padding:4px;font-size:12px}
+@media(max-width:380px){#hist.mini{grid-template-columns:repeat(auto-fill,minmax(30px,1fr))}.hcm{height:30px;min-height:30px;font-size:13px}}
 .prnone{color:var(--mute);font-size:14px;padding:10px 0}
 @media(max-width:640px){.pr{grid-template-columns:minmax(0,1fr) minmax(0,1fr);row-gap:6px}.pr .k{grid-column:1/-1}.pr .pt{grid-column:1/-1}.pr .lab{display:block}}
 #tline g[data-p]{cursor:pointer}
@@ -192,16 +211,23 @@ body{padding-bottom:env(safe-area-inset-bottom)}
 #imp .status:empty{display:none}
 .fig{position:relative}.fig>svg{position:absolute;inset:0;width:100%;height:100%}
 .tl{height:170px;margin-top:10px;background:#4a2e17;border-radius:12px}
-.hg{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:8px;margin-top:12px}
-.hc{border:1px solid var(--line);border-radius:10px;padding:6px 4px;text-align:center;background:var(--bg);cursor:pointer;font:inherit;color:inherit;min-height:0;display:block;width:100%}
+.hg{display:grid;grid-template-columns:repeat(auto-fill,minmax(7.4em,1fr));gap:8px;margin-top:12px;font-size:13px}
+.hc{display:grid;grid-template-columns:1fr auto;grid-template-areas:"pn tg" "dc dc" "tt tt";align-items:center;row-gap:.45em;border:1px solid var(--line);border-radius:14px;padding:.6em .65em .65em;text-align:left;background:var(--bg);cursor:pointer;font:inherit;font-size:13px;color:inherit;min-height:0;width:100%;min-width:0;box-shadow:0 1px 2px rgba(0,0,0,.06);transition:transform .12s}
+.hc:active{transform:scale(.97)}
 .hc.sel{outline:3px solid var(--gold);outline-offset:1px}
-.hc .pn{font-size:12px;color:var(--mute);font-variant-numeric:tabular-nums;white-space:nowrap}
-.hc .die{width:22px;height:22px;font-size:13px;margin:2px 1px}
-.hc .tt{font-size:13px;font-weight:700;margin-top:2px;white-space:nowrap}
-.hc.tai{background:#16110d;border-color:#16110d;color:#fff}.hc.xiu{background:#fff;border-color:#cfc6bc;color:#1d1712}
-.hc.tai .pn{color:#bfb3a6}.hc.xiu .pn{color:#6d6259}
+.hc .pn{grid-area:pn;font-size:.85em;font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;line-height:1.2}
+.hc .tg{grid-area:tg;font-size:.75em;font-weight:800;border-radius:99px;padding:.15em .55em;line-height:1.3;white-space:nowrap}
+.hc .dc{grid-area:dc;display:flex;justify-content:center;gap:.3em}
+.hc .die{font-size:1em;width:1.9em;height:1.9em;margin:0}
+.hc .tt{grid-area:tt;text-align:center;font-size:1.55em;font-weight:800;line-height:1;font-variant-numeric:tabular-nums}
+.hc.tai{background:linear-gradient(160deg,#2a1d12,#120d09);border-color:#3a2a18;color:#fff}
+.hc.xiu{background:#fff;border-color:#e2d9cf;color:#1d1712}
+.hc.tai .pn{color:#c9b9a5}.hc.xiu .pn{color:#8a7d70}
+.hc.tai .tg{background:#f2c14e;color:#2a1a0c}.hc.xiu .tg{background:#f1ece6;color:#1d1712}
 .hc.tai .tt{color:#f2c14e}.hc.xiu .tt{color:#1d1712}
-.hc.tai .die{box-shadow:0 0 0 1.5px #16110d,0 0 0 2.5px rgba(255,255,255,.35)}
+.hc.tai .die{box-shadow:0 0 0 1.5px rgba(255,255,255,.25)}
+:root[data-theme=dark] .hc.xiu,.dark-auto .hc.xiu{border-color:#fff}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]) .hc.tai{border-color:#5a4426}}
 .pg{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px;margin-top:12px}
 .pc{border:1px solid var(--line);border-radius:10px;padding:6px;text-align:center;background:var(--bg)}
 .pc .ds{display:block;width:100%;min-height:34px;margin:3px 0;padding:0 4px}
@@ -265,7 +291,8 @@ kbd{font:inherit;font-size:14px;border:1px solid var(--line);border-bottom-width
 <div class="fig tl"><svg id="tline" role="img" aria-label="Biểu đồ tổng điểm các phiên gần nhất"></svg></div>
 <div id="ptinfo" class="ptinfo" aria-live="polite"></div>
 <p class="hint" style="margin-top:4px">Đường tổng điểm 30 phiên gần nhất. Chấm vàng là Tài, chấm xám là Xỉu. Bấm vào một điểm để xem 3 viên của phiên đó và tô sáng ô tương ứng ở lưới bên dưới.</p>
-<div class="row" style="margin-top:10px"><button id="more" hidden>Xem thêm</button></div>
+<div class="row sp hbar"><div class="seg2" id="hmode" role="group" aria-label="Kiểu hiển thị"><button data-m="mini" aria-pressed="true">Gọn</button><button data-m="big" aria-pressed="false">Chi tiết</button></div><span class="sub2" id="hcount"></span></div>
+<div class="row" style="margin-top:8px"><button id="more" hidden>Xem thêm</button><button id="less" hidden>Thu gọn</button></div>
 <div class="hg" id="hist"></div>
 <div class="row" id="selbar" style="margin-top:10px"></div>
 </section>
@@ -290,7 +317,7 @@ kbd{font:inherit;font-size:14px;border:1px solid var(--line);border-bottom-width
 <div class="setlab">Dữ liệu</div><div id="sum" class="sync">Đang tải dữ liệu…</div>
 <div class="setlab">Google Sheet</div><div id="sync" class="sync"></div>
 <div class="setlab">Ứng dụng</div><div><div id="inst" class="sync" hidden></div><div id="instdone" class="sync">Đang mở trong trình duyệt hoặc đã cài.</div></div>
-<div class="setlab">Phiên bản</div><div class="ver">28/11 · n</div>
+<div class="setlab">Phiên bản</div><div class="ver">28/11 · s</div>
 </div>
 </details></section>
 </div></main>
@@ -603,19 +630,23 @@ function render(){
 }
 
 /* ---------- compact history ---------- */
-let shown=60,selP=null;
+const SHOW0=42;let shown=SHOW0,selP=null,histMode=(()=>{try{return localStorage.getItem('xucxac.hist')||'mini'}catch(e){return 'mini'}})();
 function renderHist(all){
   const rev=all.slice().reverse(),list=rev.slice(0,shown).reverse();
-  const cell=([p,d])=>{const t=sum(d),c=t>=11?'tai':'xiu';return `<button class="hc ${c}${p===selP?' sel':''}" data-p="${esc(p)}" aria-label="Phiên ${esc(p)}: ${d.join('-')}, tổng ${t}"><div class="pn">#${esc(p)}</div><div>${chips(d)}</div><div class="tt">${t} · ${tx(t)}</div></button>`};
+  const cell=([p,d])=>{const t=sum(d),c=t>=11?'tai':'xiu';if(histMode==='mini')return `<button class="hcm ${c}${p===selP?' sel':''}" data-p="${esc(p)}" aria-label="Phiên ${esc(p)}: ${d.join('-')}, tổng ${t}">${t}</button>`;return `<button class="hc ${c}${p===selP?' sel':''}" data-p="${esc(p)}" title="#${esc(p)}" aria-label="Phiên ${esc(p)}: ${d.join('-')}, tổng ${t}"><span class="pn">#${esc(String(p).slice(-4))}</span><span class="tg">${tx(t)}</span><span class="dc">${chips(d)}</span><span class="tt">${t}</span></button>`};
   let html='',seg=[];
   const segAll=new Map();{let s0=null,prev=null;for(const [p] of all){if(prev===null||p!==prev+1)s0=p;segAll.set(p,s0);prev=p}}
   const flush=()=>{if(!seg.length)return;const a=seg[0][0],b=seg[seg.length-1][0],full=all.filter(([p])=>segAll.get(p)===segAll.get(a)).length;
     html+=`<div class="seg"><b>Đợt #${esc(segAll.get(a))} → #${esc(b)}</b><span>${full} phiên liền nhau</span></div>`+seg.map(cell).join('');seg=[]};
   list.forEach((r,i)=>{if(i&&r[0]!==list[i-1][0]+1){flush();html+=`<div class="gapm">Thiếu ${(r[0]-list[i-1][0]-1).toLocaleString('vi-VN')} phiên (#${esc(list[i-1][0]+1)} → #${esc(r[0]-1)})</div>`}seg.push(r)});flush();
   $('#hist').innerHTML=list.length?html:`<p class="empty">${loaded?'Chưa có dữ liệu':'Đang tải…'}</p>`;
-  const more=$('#more');more.hidden=rev.length<=shown;more.textContent=`Xem thêm phiên cũ hơn (còn ${Math.max(0,rev.length-shown)})`;
+  const more=$('#more');more.hidden=rev.length<=shown;more.textContent=`Xem thêm phiên cũ hơn (còn ${Math.max(0,rev.length-shown).toLocaleString('vi-VN')})`;
+  $('#less').hidden=shown<=SHOW0;
+  $('#hist').classList.toggle('mini',histMode==='mini');
+  document.querySelectorAll('#hmode button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.m===histMode)));
+  $('#hcount').textContent=`Đang hiện ${Math.min(shown,rev.length).toLocaleString('vi-VN')} / ${rev.length.toLocaleString('vi-VN')} phiên gần nhất`;
   const sb=$('#selbar');
-  if(selP!==null&&store.has(selP)&&canWrite)sb.innerHTML=`<span>Phiên <strong>#${esc(selP)}</strong> (${esc(store.get(selP).join('-'))})</span><button class="x" id="delsel">Xoá phiên này</button><button class="x" id="unsel">Bỏ chọn</button>`;else{sb.innerHTML='';selP=null}
+  if(selP!==null&&store.has(selP)){const d=store.get(selP),t=sum(d);sb.innerHTML=`<span>Phiên <strong>#${esc(selP)}</strong></span><span>${chips(d)}</span><span class="tag ${t>=11?'tai':'xiu'}">${t} · ${tx(t)}</span><button class="x" id="unsel">Bỏ chọn</button>`}else{sb.innerHTML='';selP=null}
   drawLine();showInfo();
 }
 const line=$('#tline');
@@ -646,12 +677,12 @@ line.addEventListener('click',e=>{
   const c=document.querySelector(`.hc[data-p="${p}"]`);
   if(c){c.classList.remove('flash');void c.offsetWidth;c.classList.add('flash');c.scrollIntoView({block:'nearest',behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'})}
 });
-$('#more').addEventListener('click',()=>{shown+=60;render()});
+$('#more').addEventListener('click',()=>{shown+=histMode==='mini'?300:60;render()});
+$('#less').addEventListener('click',()=>{shown=SHOW0;render();$('#hist').scrollIntoView({block:'start'})});
+$('#hmode').addEventListener('click',e=>{const b=e.target.closest('[data-m]');if(!b)return;histMode=b.dataset.m;try{localStorage.setItem('xucxac.hist',histMode)}catch(x){}render()});
 $('#hist').addEventListener('click',e=>{const b=e.target.closest('[data-p]');if(!b)return;const p=Number(b.dataset.p);selP=selP===p?null:p;render()});
 $('#selbar').addEventListener('click',async e=>{
   if(e.target.id==='unsel'){selP=null;render();return}
-  if(e.target.id!=='delsel')return;
-  try{await writeRolls([],[selP]);status(`Đã xoá phiên #${selP}.`);selP=null;render()}catch(err){status('Xoá không thành công.',true)}
 });
 
 /* ---------- backtest ---------- */
@@ -711,7 +742,7 @@ const CYC=(()=>{const out=[],seen=new Set();
   return out;})();
 function cycMatch(c,comp,a){
   const k=c.length,need=Math.max(2,k-1),M=comp.length;if(M<need)return null;let best=null;
-  for(let p=0;p<k;p++){if(a>c[p])continue;let s=0;while(s<M&&comp[M-1-s]===c[(((p-1-s)%k)+k)%k])s++;if(s>=need&&(!best||s>best.s))best={E:c[p],s}}
+  for(let p=0;p<k;p++){if(a>c[p])continue;let s=0;while(s<M&&comp[M-1-s]===c[(((p-1-s)%k)+k)%k])s++;if(s>=need&&(!best||s>best.s))best={E:c[p],s,p}}
   return best;
 }
 function runAnalysis(all){
@@ -756,6 +787,10 @@ function renderRun(all){
   const R=runAnalysis(all),side=s=>s?'<b class="pt-t">Tài</b>':'<b class="pt-x">Xỉu</b>';
   const chip=(h,n)=>{if(n<30)return `<span class="chip w">Chưa đủ dữ liệu (${n}/30 lần)</span>`;const z=(h/n-.5)/Math.sqrt(.25/n);return Math.abs(z)<2?`<span class="chip n">Không hơn đoán bừa</span>`:`<span class="chip a">Lệch khỏi may rủi, cần thêm dữ liệu để chắc</span>`};
   const acc=(h,n)=>`<div class="ev">${n?`Theo cầu này trước đây đúng ${h}/${n} lần (${(h/n*100).toFixed(0)}%)`:'Chưa có lần nào để chạy thử'}</div>`;
+  // dải hình: các chuỗi gần nhất + ô "?" đặt đúng chỗ con tiếp theo
+  const strip=(rs,pred,curLab,nextLab)=>{const L=rs.length-1,cont=pred===rs[L].s,bx=s=>`<b class="${s?'qt':'qx'}">${s?'T':'X'}</b>`,q=`<b class="q ${pred?'qt':'qx'}">?</b>`;
+    const grp=(r,lab,cls,extra)=>`<span class="sg${cls}"><span class="sb">${Array.from({length:Math.min(r.n,4)},()=>bx(r.s)).join('')}${r.n>4?`<i>+${r.n-4}</i>`:''}${extra}</span><small>${lab}</small></span>`;
+    return `<div class="stp">${rs.map((r,i)=>grp(r,i===L?curLab:r.n,i===L?' cur':'',i===L&&cont?q:'')).join('')}${cont?'':`<span class="sg nx"><span class="sb">${q}</span><small>${nextLab}</small></span>`}</div>`};
   const nx=v=>v==null?'<span class="nxt na">Chưa rõ</span>':`<span class="nxt ${v?'t':'x'}">${v?'TÀI':'XỈU'}</span>`;
   if(!R.now||!R.now.runs.length){$('#runline').innerHTML='<p class="prnone">Chưa có dữ liệu.</p>';$('#runnow').innerHTML='';$('#runall').innerHTML='';return}
   const rs=R.now.runs.slice(-10);
@@ -766,12 +801,12 @@ function renderRun(all){
     const v=1-ls,cont=c[0],sw=c[1];
     const hv=n?(cont!==sw?(sw>cont?1-ls:ls):(c[2]?1-ls:ls)):null;
     const hist=n?`trước đây sau cầu này: ${T>X?'<b class="hiw">':''}Tài ${T}${T>X?'</b>':''} · ${X>T?'<b class="hiw">':''}Xỉu ${X}${X>T?'</b>':''}${cont===sw?' (hoà)':''}`:'chưa từng gặp cầu này trong lịch sử';
-    return `<div class="rc2"><div class="nm2">Cầu ${S.key.split('-').join('')}</div><div class="arrow">→</div>${nx(v)}<div class="ev2">${hist}${S.n?` · theo lịch sử đúng ${(S.h/S.n*100).toFixed(0)}% / ${S.n} lần`:''}${hv!=null&&hv!==v?` · <b>lịch sử nghiêng ${hv?'Tài':'Xỉu'}</b>`:''}</div></div>`}).join('')||'<p class="prnone">Chưa đủ chuỗi để tra.</p>';
+    return `<div class="rc2"><div class="nm2">Cầu ${S.key.split('-').some(x=>x.length>1)?S.key:S.key.split('-').join('')}</div><div class="arrow">→</div>${nx(v)}${strip(R.now.runs.slice(1).slice(-K),v,R.now.runs[R.now.runs.length-1].n+' · đủ','tiếp theo')}<div class="ev2">${hist}${S.n?` · theo lịch sử đúng ${(S.h/S.n*100).toFixed(0)}% / ${S.n} lần`:''}${hv!=null&&hv!==v?` · <b>lịch sử nghiêng ${hv?'Tài':'Xỉu'}</b>`:''}</div></div>`}).join('')||'<p class="prnone">Chưa đủ chuỗi để tra.</p>';
   const st=R.now.st,rows=[];
   if(st){
-    if(st.a>=4){rows.push(`<div class="rc2"><div class="nm2">Bệt ${st.s?'Tài':'Xỉu'} (${st.a})</div><div class="arrow">→</div>${nx(st.s)}<div class="ev2">${R.bet[1]?`theo bệt trước đây đúng ${(R.bet[0]/R.bet[1]*100).toFixed(0)}% / ${R.bet[1]} lần`:''}</div></div>`)}
+    if(st.a>=4){rows.push(`<div class="rc2"><div class="nm2">Bệt ${st.s?'Tài':'Xỉu'} (${st.a})</div><div class="arrow">→</div>${nx(st.s)}${strip(R.now.runs.slice(-1),st.s,st.a,'')}<div class="ev2">${R.bet[1]?`theo bệt trước đây đúng ${(R.bet[0]/R.bet[1]*100).toFixed(0)}% / ${R.bet[1]} lần`:''}</div></div>`)}
     CYC.forEach((cy,j)=>{const m=cycMatch(cy.c,st.comp,st.a);if(!m)return;const pred=st.a<m.E?st.s:1-st.s;
-      rows.push({s:m.s,html:`<div class="rc2"><div class="nm2">Cầu ${cy.name}</div><div class="arrow">→</div>${nx(pred)}<div class="ev2">khớp ${m.s+1} chuỗi gần nhất${R.stat[j][1]?` · đúng ${(R.stat[j][0]/R.stat[j][1]*100).toFixed(0)}% / ${R.stat[j][1]} lần`:''}</div></div>`})});
+      rows.push({s:m.s,html:`<div class="rc2"><div class="nm2">Cầu ${cy.name}</div><div class="arrow">→</div>${nx(pred)}${strip(R.now.runs.slice(-(m.s+1)),pred,st.a+'/'+m.E,'tiếp · dài '+cy.c[(m.p+1)%cy.c.length])}<div class="ev2">khớp ${m.s+1} chuỗi gần nhất${R.stat[j][1]?` · đúng ${(R.stat[j][0]/R.stat[j][1]*100).toFixed(0)}% / ${R.stat[j][1]} lần`:''}</div></div>`})});
   }
   const html=rows.map(r=>typeof r==='string'?r:r).sort((a,b)=>(typeof b==='string'?99:b.s)-(typeof a==='string'?99:a.s)).map(r=>typeof r==='string'?r:r.html).join('');
   $('#runnow').innerHTML=html||'<p class="prnone">Hiện không có cầu nào đang khớp.</p>';
