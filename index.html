@@ -165,6 +165,10 @@ body{padding-bottom:env(safe-area-inset-bottom)}
   .nm2{font-size:17px}.nxt{min-width:70px;font-size:16px;padding:5px 10px}
   .pr{padding:8px 0}
 }
+.anok{padding:10px 12px;border-radius:10px;background:light-dark(#eef7f0,#16261b);color:var(--ink)}
+.anbad{padding:10px 12px;border-radius:10px;background:light-dark(#fff1cc,#3a2d0c)}.anbad ul{margin:6px 0;padding-left:20px}
+.am{margin-top:10px}
+#anom .sub2{white-space:normal}#anom .acc::after{display:none}#anom .acc i{background:var(--gold)}
 .prnone{color:var(--mute);font-size:14px;padding:10px 0}
 @media(max-width:640px){.pr{grid-template-columns:minmax(0,1fr) minmax(0,1fr);row-gap:6px}.pr .k{grid-column:1/-1}.pr .pt{grid-column:1/-1}.pr .lab{display:block}}
 #tline g[data-p]{cursor:pointer}
@@ -235,11 +239,6 @@ kbd{font:inherit;font-size:14px;border:1px solid var(--line);border-bottom-width
 
 
 <div class="duo">
-<section class="card fold"><details data-k="pat" open><summary><h2>Tra cứu cầu đang chạy</h2></summary>
-<div class="pr ph"><div></div><div>Cầu</div><div>Trước đây sau cầu này</div><div>Nếu luôn đặt theo cầu</div></div>
-<div id="pat" class="patl"></div>
-</details></section>
-
 <section class="card fold"><details data-k="run" open><summary><h2>Cầu theo chuỗi (1-2-3, 3-2-1, 1-1, 2-2, bệt…)</h2></summary>
 <div class="runline" id="runline"></div>
 <h3 class="h3">Cầu chuỗi đang chạy</h3>
@@ -248,6 +247,10 @@ kbd{font:inherit;font-size:14px;border:1px solid var(--line);border-bottom-width
 <h3 class="h3">Cầu lặp đang khớp</h3>
 <div id="runnow"></div>
 <details class="allcyc"><summary>Bảng tất cả các cầu</summary><div class="scroll"><table><thead><tr><th>Cầu</th><th class="num">Số lần khớp</th><th class="num">Theo cầu đúng</th><th>Đánh giá</th></tr></thead><tbody id="runall"></tbody></table></div></details>
+</details></section>
+<section class="card fold"><details data-k="pat" open><summary><h2>Tra cứu cầu đang chạy</h2></summary>
+<div class="pr ph"><div></div><div>Cầu</div><div>Trước đây sau cầu này</div><div>Nếu luôn đặt theo cầu</div></div>
+<div id="pat" class="patl"></div>
 </details></section>
 </div>
 
@@ -266,6 +269,10 @@ kbd{font:inherit;font-size:14px;border:1px solid var(--line);border-bottom-width
 <div class="hg" id="hist"></div>
 <div class="row" id="selbar" style="margin-top:10px"></div>
 </section>
+<section class="card fold"><details data-k="anom" open><summary><h2>Cảnh báo bất thường</h2></summary>
+<div id="anom"></div>
+</details></section>
+
 <section class="card fold"><details data-k="freq" open><summary><h2>Tần suất từng mặt</h2></summary>
 <div class="stats" id="stats"></div>
 <p class="hint">Vạch dọc là mức 16,7% nếu xúc xắc ngẫu nhiên đều. χ² lớn hơn 11,07 (5 bậc tự do) mới là dấu hiệu lệch, và chỉ đáng tin khi có từ vài nghìn phiên trở lên.</p>
@@ -283,7 +290,7 @@ kbd{font:inherit;font-size:14px;border:1px solid var(--line);border-bottom-width
 <div class="setlab">Dữ liệu</div><div id="sum" class="sync">Đang tải dữ liệu…</div>
 <div class="setlab">Google Sheet</div><div id="sync" class="sync"></div>
 <div class="setlab">Ứng dụng</div><div><div id="inst" class="sync" hidden></div><div id="instdone" class="sync">Đang mở trong trình duyệt hoặc đã cài.</div></div>
-<div class="setlab">Phiên bản</div><div class="ver">28/11 · m</div>
+<div class="setlab">Phiên bản</div><div class="ver">28/11 · n</div>
 </div>
 </details></section>
 </div></main>
@@ -787,6 +794,39 @@ function renderBT(all){
   const flush=()=>{const n=seg.length,n1=seg.filter(x=>x).length,n2=n-n1;if(n>1&&n1&&n2){let r=1;for(let i=1;i<n;i++)if(seg[i]!==seg[i-1])r++;R+=r;mu+=2*n1*n2/n+1;v+=2*n1*n2*(2*n1*n2-n)/(n*n*(n-1))}seg=[]};
   for(const [p,d] of all){if(pp!==null&&p!==pp+1)flush();seg.push(sum(d)>=11?1:0);pp=p}flush();
   $('#runs').textContent=v>0&&all.length>=30?`Kiểm định chuỗi Tài/Xỉu (runs test): ${R} chuỗi, kỳ vọng ${mu.toFixed(1)}, z = ${((R-mu)/Math.sqrt(v)).toFixed(2)}. |z| < 2 nghĩa là không có xu hướng bệt hay đảo bất thường.`:'Kiểm định chuỗi Tài/Xỉu: cần ít nhất 30 phiên.';
+  renderAnomaly(all,{tx,di,R,mu,v});
+}
+
+/* ---------- cảnh báo bất thường ---------- */
+function erfc(x){const z=Math.abs(x),t=1/(1+0.5*z),r=t*Math.exp(-z*z-1.26551223+t*(1.00002368+t*(0.37409196+t*(0.09678418+t*(-0.18628806+t*(0.27886807+t*(-1.13520398+t*(1.48851587+t*(-0.82215223+t*0.17087277)))))))));return x>=0?r:2-r}
+const pTwo=z=>erfc(Math.abs(z)/Math.SQRT2);
+const pChi5=x=>Math.min(1,erfc(Math.sqrt(x/2))+Math.sqrt(2*x/Math.PI)*Math.exp(-x/2)*(1+x/3));
+function renderAnomaly(all,B){
+  const el=$('#anom');if(!el)return;
+  const N=all.length,tests=[],MIN=100;
+  const prop=(name,h,n,p0)=>{if(n<MIN)return;const z=(h/n-p0)/Math.sqrt(p0*(1-p0)/n);tests.push({name,p:pTwo(z),txt:`đúng ${(h/n*100).toFixed(1)}% / ${n} lần (may rủi ${(p0*100).toFixed(1)}%)${z>0?' – cao hơn may rủi':' – thấp hơn may rủi'}`})};
+  // 1. tỉ lệ Tài/Xỉu và từng mặt
+  if(N>=MIN){const t=all.filter(([,d])=>sum(d)>=11).length;prop('Tỉ lệ Tài',t,N,.5);
+    [0,1,2].forEach(i=>{const c=[0,0,0,0,0,0];all.forEach(([,d])=>c[d[i]-1]++);const e=N/6,chi=c.reduce((s,o)=>s+(o-e)**2/e,0);tests.push({name:`Mặt xúc xắc ${i+1} lệch`,p:pChi5(chi),txt:`χ² = ${chi.toFixed(1)}`})});
+    if(B.v>0)tests.push({name:'Chuỗi Tài/Xỉu (bệt/đảo bất thường)',p:pTwo((B.R-B.mu)/Math.sqrt(B.v)),txt:`${B.R} chuỗi, kỳ vọng ${B.mu.toFixed(0)}`});}
+  // 2. chiến thuật soi cầu
+  TX.forEach((s,j)=>prop(s.n,B.tx[j][0],B.tx[j][1],.5));
+  DIE.forEach((s,j)=>prop(s.n,B.di[j][0],B.di[j][1],1/6));
+  for(let k=3;k<=15;k++){const s=patternStats(all,k);prop(`Tra cứu cầu ${k} phiên`,s.hits,s.tries,.5)}
+  {const Q=runSeqAnalysis(all,[2,3,4,5,6]);[2,3,4,5,6].forEach(K=>prop(`Cầu chuỗi ${K} chuỗi (theo lịch sử)`,Q[K].h,Q[K].n,.5))}
+  {const R=runAnalysis(all);prop('Theo bệt',R.bet[0],R.bet[1],.5);CYC.forEach((c,j)=>prop('Cầu '+c.name,R.stat[j][0],R.stat[j][1],.5))}
+  // Holm–Bonferroni ở mức 1%
+  const M=tests.length,sorted=tests.slice().sort((a,b)=>a.p-b.p),hit=[];
+  for(let i=0;i<M;i++){if(sorted[i].p<=0.01/(M-i))hit.push(sorted[i]);else break}
+  const need=Math.max(0,2500-N),pct=Math.min(100,N/2500*100);
+  const meter=`<div class="am"><div class="acc"><i style="width:${pct.toFixed(0)}%"></i></div><div class="sub2">Dữ liệu: ${N.toLocaleString('vi-VN')} phiên${need?` · nên có ít nhất 2.500 phiên để kết luận chắc (còn thiếu ${need.toLocaleString('vi-VN')})`:' · đủ để kết luận'}</div></div>`;
+  if(!M){el.innerHTML=`<div class="anok"><b>Chưa đủ dữ liệu để kiểm tra.</b> Cần ít nhất ${MIN} phiên.</div>`+meter;return}
+  if(hit.length){
+    el.innerHTML=`<div class="anbad"><b>⚠ Phát hiện ${hit.length} dấu hiệu lệch khỏi may rủi</b><ul>${hit.slice(0,6).map(t=>`<li><b>${esc(t.name)}</b>: ${esc(t.txt)}</li>`).join('')}${hit.length>6?`<li>… và ${hit.length-6} dấu hiệu khác</li>`:''}</ul><div class="sub2">Đã trừ hao việc thử ${M} cách cùng lúc. Hãy xem dấu hiệu còn giữ được khi dữ liệu tăng gấp đôi rồi mới tin.</div></div>`+meter;
+  }else{
+    const b=sorted[0];
+    el.innerHTML=`<div class="anok"><b>✓ Chưa phát hiện quy luật nào.</b> Đã kiểm tra ${M} cách (tỉ lệ Tài/Xỉu, từng mặt xúc xắc, chuỗi bệt/đảo và các kiểu cầu) – tất cả đều trong mức may rủi.</div><div class="sub2">Gần ngưỡng nhất: ${esc(b.name)} (${esc(b.txt)}).</div>`+meter;
+  }
 }
 
 /* ---------- image reading ---------- */
