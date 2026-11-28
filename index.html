@@ -131,6 +131,7 @@ th{font-size:13px;color:var(--mute);font-weight:600}
 @keyframes qp{50%{outline-color:transparent}}
 .sb i{font-style:normal;font-size:11px;font-weight:700;color:var(--mute);padding:0 2px}
 .sg small{font-size:11px;color:var(--mute);white-space:nowrap}.sg.nx small{color:#2f7cf6;font-weight:700}
+.neverr{color:light-dark(#d32f2f,#ff6b6b);font-weight:700}
 .ev2{grid-column:1/-1;font-size:12px;color:var(--mute);margin-top:4px}
 .allcyc{margin-top:10px}.allcyc>summary{cursor:pointer;font-weight:600;color:var(--mute);min-height:36px;display:flex;align-items:center}
 @media(max-width:640px){.rc{grid-template-columns:minmax(0,1fr)}}
@@ -317,7 +318,7 @@ kbd{font:inherit;font-size:14px;border:1px solid var(--line);border-bottom-width
 <div class="setlab">Dữ liệu</div><div id="sum" class="sync">Đang tải dữ liệu…</div>
 <div class="setlab">Google Sheet</div><div id="sync" class="sync"></div>
 <div class="setlab">Ứng dụng</div><div><div id="inst" class="sync" hidden></div><div id="instdone" class="sync">Đang mở trong trình duyệt hoặc đã cài.</div></div>
-<div class="setlab">Phiên bản</div><div class="ver">28/11 · u</div>
+<div class="setlab">Phiên bản</div><div class="ver">28/11 · v</div>
 </div>
 </details></section>
 </div></main>
@@ -800,7 +801,7 @@ function renderRun(all){
     // Theo cầu: dãy chuỗi lặp lại, chuỗi đang chạy đã đủ độ dài của nó → con tiếp theo đổi bên
     const v=1-ls,cont=c[0],sw=c[1];
     const hv=n?(cont!==sw?(sw>cont?1-ls:ls):(c[2]?1-ls:ls)):null;
-    const hist=n?`trước đây sau cầu này: ${T>X?'<b class="hiw">':''}Tài ${T}${T>X?'</b>':''} · ${X>T?'<b class="hiw">':''}Xỉu ${X}${X>T?'</b>':''}${cont===sw?' (hoà)':''}`:'chưa từng gặp cầu này trong lịch sử';
+    const hist=n?`trước đây sau cầu này: ${T>X?'<b class="hiw">':''}Tài ${T}${T>X?'</b>':''} · ${X>T?'<b class="hiw">':''}Xỉu ${X}${X>T?'</b>':''}${cont===sw?' (hoà)':''}`:'<b class="neverr">chưa từng gặp cầu này trong lịch sử</b>';
     return `<div class="rc2"><div class="nm2">Cầu ${S.key.split('-').some(x=>x.length>1)?S.key:S.key.split('-').join('')}</div><div class="arrow">→</div>${nx(v)}${strip(R.now.runs.slice(1).slice(-K),v,R.now.runs[R.now.runs.length-1].n+' · đủ','tiếp theo')}<div class="ev2">${hist}${S.n?` · theo lịch sử đúng ${(S.h/S.n*100).toFixed(0)}% / ${S.n} lần`:''}${hv!=null&&hv!==v?` · <b>lịch sử nghiêng ${hv?'Tài':'Xỉu'}</b>`:''}</div></div>`}).join('')||'<p class="prnone">Chưa đủ chuỗi để tra.</p>';
   const st=R.now.st,rows=[];
   if(st){
